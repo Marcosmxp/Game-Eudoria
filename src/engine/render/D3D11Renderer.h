@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/render/SpriteRenderer.h"
+
 #include <cstdint>
 #include <d3d11.h>
 #include <dxgi.h>
@@ -17,8 +19,13 @@ public:
 
     bool initialize(void* windowHandle, std::uint32_t width, std::uint32_t height);
     void resize(std::uint32_t width, std::uint32_t height);
-    void render();
+    void beginFrame();
+    void endFrame();
     void shutdown();
+
+    [[nodiscard]] std::uint32_t width() const noexcept { return width_; }
+    [[nodiscard]] std::uint32_t height() const noexcept { return height_; }
+    [[nodiscard]] SpriteRenderer& sprites() noexcept { return spriteRenderer_; }
 
 private:
     bool createRenderTarget();
@@ -28,6 +35,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> context_;
     Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain_;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTarget_;
+    SpriteRenderer spriteRenderer_;
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
 };

@@ -22,6 +22,9 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
+    // Local-only pixel comparison layer. The actual HUD is reconstructed from the SWF display list.
+    legacyHudReference_.initialize(renderer_.sprites());
+
     MSG message{};
     bool running = true;
     while (running) {
@@ -35,7 +38,9 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         }
 
         if (running && !IsIconic(window_)) {
-            renderer_.render();
+            renderer_.beginFrame();
+            legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
+            renderer_.endFrame();
         }
     }
 
@@ -115,6 +120,10 @@ LRESULT Win32Application::handleMessage(
         return 0;
 
     case WM_KEYDOWN:
+        if (wParam == VK_F2) {
+            legacyHudReference_.toggle();
+            return 0;
+        }
         if (wParam == VK_F11) {
             toggleBorderlessFullscreen();
             return 0;

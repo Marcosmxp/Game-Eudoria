@@ -70,12 +70,17 @@ bool D3D11Renderer::initialize(void* windowHandle, const std::uint32_t width, co
             context_.GetAddressOf());
     }
 
-    return SUCCEEDED(result) && createRenderTarget();
+    if (FAILED(result) || !createRenderTarget() || !spriteRenderer_.initialize(device_.Get(), context_.Get())) {
+        shutdown();
+        return false;
+    }
+
+    return true;
 }
 
 bool D3D11Renderer::createRenderTarget() {
     Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
-    if (FAILED(swapChain_->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf())))) {
+    if (!swapChain_ || FAILED(swapChain_->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf())))) {
         return false;
     }
 
@@ -103,22 +108,31 @@ void D3D11Renderer::resize(const std::uint32_t width, const std::uint32_t height
     }
 }
 
-void D3D11Renderer::render() {
-    if (!context_ || !renderTarget_ || !swapChain_) {
+void D3D11Renderer::beginFrame() {
+    if (!context_ || !renderTarget_) {
         return;
     }
 
-    constexpr float clearColor[4] = {0.025f, 0.03f, 0.035f, 1.0f};
+    constexpr float clearColor[4] = {0.025F, 0.03F, 0.035F, 1.0F};
     context_->OMSetRenderTargets(1, renderTarget_.GetAddressOf(), nullptr);
     context_->ClearRenderTargetView(renderTarget_.Get(), clearColor);
-    swapChain_->Present(1, 0);
+    spriteRenderer_.begin(width_, height_);
+}
+
+void D3D11Renderer::endFrame() {
+    if (swapChain_) {
+        swapChain_->Present(1, 0);
+    }
 }
 
 void D3D11Renderer::shutdown() {
+    spriteRenderer_.shutdown();
     releaseRenderTarget();
     swapChain_.Reset();
     context_.Reset();
     device_.Reset();
+    width_ = 0;
+    height_ = 0;
 }
 
 } // namespace eudoria
