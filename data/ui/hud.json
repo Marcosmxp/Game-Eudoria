@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "eudoria.ui.hud",
+  "legacyStage": {
+    "width": 1200,
+    "height": 640
+  },
+  "scaling": {
+    "mode": "anchored",
+    "pixelPerfectLegacyMode": true
+  },
+  "layers": [
+    "world",
+    "worldEffects",
+    "hud",
+    "windows",
+    "modal",
+    "tooltip",
+    "cursor"
+  ],
+  "components": [
+    {
+      "id": "playerInfo",
+      "legacySymbol": "playerUI.PlayerInfoUIMC",
+      "anchor": "top-left"
+    },
+    {
+      "id": "smallMap",
+      "legacySymbol": "playerUI.SmallMapUIMC",
+      "anchor": "top-right"
+    },
+    {
+      "id": "taskTracer",
+      "legacySymbol": "playerUI.TaskTracerUIMC",
+      "anchor": "top-right"
+    },
+    {
+      "id": "controlBar",
+      "legacySymbol": "playerUI.ControlBarUIMC",
+      "anchor": "bottom-center"
+    }
+  ],
+  "windows": {
+    "worldMap": "playerUI.WorldMapUIMC",
+    "character": "playerUI.PlayerFullInfoUIMC",
+    "inventory": "playerUI.MainBagUIMC",
+    "achievements": "playerUI.AchievementUIMC",
+    "skills": "playerUI.SkillBookUIMC",
+    "mount": "playerUI.RideBoxUIMC",
+    "friends": "playerUI.FriendBoxUIMC",
+    "pet": "playerUI.PetBoxUIMC",
+    "quests": "playerUI.TaskBoxUIMC",
+    "afk": "playerUI.BotUIMC"
+  }
+}

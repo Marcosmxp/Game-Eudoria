@@ -1,29 +1,68 @@
 # Eudoria
 
-Eudoria is a native desktop reconstruction project inspired by the legacy Crystal Saga client. The project targets a faithful offline single-player experience while replacing Flash/SWF runtime dependencies with a native Windows renderer and local game systems.
+Eudoria is a native Windows reconstruction project based on recovered legacy Crystal Saga client resources. The target is a faithful offline desktop game while replacing Flash/SWF runtime dependencies and online server transport with native rendering and local game systems.
 
 ## Current phase
 
-Phase 0 - legacy asset cataloguing, native runtime bootstrap, and HUD reconstruction groundwork.
+**Phase 0 - Foundation and legacy catalogue.**
+
+Implemented so far:
+
+- native Win32 application bootstrap
+- Direct3D 11 device/swap chain
+- windowed mode + F11 borderless fullscreen
+- 1200x640 legacy UI reference space
+- initial HUD payload and legacy SymbolClass mapping
+- local scanner for the multi-GB resource dump
+- reconstruction architecture and phased plan
 
 ## Technical direction
 
 - C++23
 - Win32
 - Direct3D 11
-- DirectWrite
-- WIC
-- XAudio2
+- DirectWrite (planned)
+- WIC (planned)
+- XAudio2 (planned)
 - CMake
-- Native Windows executable
-- No browser runtime
-- No Flash Player runtime
-- No game engine
+- no browser runtime
+- no Flash Player runtime
+- no game engine
 
-## Legacy reference resolution
+## Build
 
-The original client used a 1200x640 logical stage. Eudoria keeps this as a legacy UI coordinate space for pixel-accurate reconstruction while allowing the world viewport to expand on modern fullscreen resolutions.
+Requirements:
 
-## Repository policy
+- Windows 10/11
+- Visual Studio 2022 with Desktop development with C++
+- CMake 3.24+
 
-Large original resource dumps are kept outside Git. Generated manifests, schemas, tooling, documentation, and Eudoria-owned assets belong in this repository.
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Debug
+```
+
+Executable:
+
+```text
+build/Debug/Eudoria.exe
+```
+
+Controls in the bootstrap runtime:
+
+- `F11`: toggle borderless fullscreen
+- `Esc`: close application
+
+## Legacy asset policy
+
+The original multi-GB dump stays local and is ignored by Git. Do not commit `resources_by_type`, extracted legacy assets, RAR/ZIP dumps, generated saves, or build output.
+
+Use the scanner instead:
+
+```powershell
+py tools/legacy_scanner/legacy_scanner.py `
+  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type" `
+  --output generated/legacy
+```
+
+See `docs/reconstruction-plan.md` for the current implementation order.
