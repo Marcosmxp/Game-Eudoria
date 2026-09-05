@@ -61,11 +61,13 @@ private:
     static constexpr eudoria::ui::Point kRoot{0.0F, 0.0F};
     static constexpr eudoria::ui::Anchor kAnchor = eudoria::ui::Anchor::TopLeft;
 
-    // FFDec raster bounds for PlayerInfoUIMC. The actual SWF origin is inside
-    // this bitmap; keeping the offset lets us place the original skin at the
-    // same logical root used by PlayerInfoUI.
-    static constexpr float kReferenceOriginX = 107.0F;
-    static constexpr float kReferenceOriginY = 20.5F;
+    // Payload-derived FFDec raster origin for symbol3550.
+    // bgBox (character 3505) is placed at (0,0). Its exported raster starts at
+    // local (-20,-20), and it appears in PlayerInfoUIMC at source (72,1), which
+    // resolves the complete symbol3550 raster origin to (-92,-21).
+    // The previous -107 X origin clipped 15 px of the actual PlayerInfo chrome.
+    static constexpr float kReferenceOriginX = 92.0F;
+    static constexpr float kReferenceOriginY = 21.0F;
 
     // Exact first-frame placements from symbol3550 and recursive SWF bounds
     // for the animated bar symbols (674 = HP, 269 = MP).
