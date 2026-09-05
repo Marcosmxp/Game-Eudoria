@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "id": "eudoria.ui.playerInfo",
+  "legacy": {
+    "class": "playerUI.PlayerInfoUIMC",
+    "export": "symbol3550",
+    "characterId": 3550,
+    "root": {
+      "x": 0.0,
+      "y": 0.0,
+      "anchor": "top-left"
+    }
+  },
+  "vitals": {
+    "hp": {
+      "characterId": 674,
+      "x": 145.0,
+      "y": 31.0,
+      "scaleX": 0.8667755,
+      "scaleY": 0.78125,
+      "frames": 100,
+      "minimumFrame": 2
+    },
+    "mp": {
+      "characterId": 269,
+      "x": 145.0,
+      "y": 44.5,
+      "scaleX": 0.8662415,
+      "scaleY": 0.8125,
+      "frames": 100,
+      "minimumFrame": 2
+    },
+    "petHp": {
+      "characterId": 674,
+      "x": 140.35,
+      "y": 81.55,
+      "scaleX": 0.666626,
+      "scaleY": 0.8125,
+      "frames": 100,
+      "minimumFrame": 2
+    },
+    "petMp": {
+      "characterId": 269,
+      "x": 140.2,
+      "y": 94.35,
+      "scaleX": 0.658356,
+      "scaleY": 0.787506,
+      "frames": 100,
+      "minimumFrame": 2
+    }
+  },
+  "fields": [
+    {"id":"txtName","characterId":3520,"x":119.0,"y":10.0},
+    {"id":"txtLevel","characterId":3521,"x":72.0,"y":54.5},
+    {"id":"txtHp","characterId":3522,"x":83.95,"y":26.0},
+    {"id":"txtMp","characterId":3523,"x":83.95,"y":39.0},
+    {"id":"headIconPoint","characterId":181,"x":4.0,"y":4.0},
+    {"id":"pointPetIcon","characterId":181,"x":52.0,"y":77.0},
+    {"id":"txtPK","characterId":3524,"x":71.0,"y":3.0},
+    {"id":"cmdFateSkill","characterId":3529,"x":229.5,"y":36.25},
+    {"id":"cmdPetAction","characterId":3532,"x":204.95,"y":93.35},
+    {"id":"txtPetAction","characterId":3533,"x":192.95,"y":87.05},
+    {"id":"txtPetHP","characterId":3534,"x":92.95,"y":76.0},
+    {"id":"txtPetMP","characterId":3535,"x":92.95,"y":89.35},
+    {"id":"txtPetLevel","characterId":3536,"x":85.95,"y":102.4},
+    {"id":"fpsIcon","characterId":3541,"x":203.0,"y":0.0},
+    {"id":"pingIcon","characterId":3546,"x":215.0,"y":0.0},
+    {"id":"teamLeaderIcon","characterId":3549,"x":12.0,"y":11.5}
+  ]
+}

@@ -6,6 +6,8 @@ param(
 
     [string]$RuntimeOutput = "legacy_assets/runtime/ui/control_bar",
 
+    [string]$PlayerInfoOutput = "legacy_assets/runtime/ui/player_info",
+
     [string]$SevenZip = "7z"
 )
 
@@ -22,10 +24,12 @@ if (-not (Get-Command $SevenZip -ErrorAction SilentlyContinue)) {
 $root = (Resolve-Path ".").Path
 $outputPath = Join-Path $root $Output
 $runtimeOutputPath = Join-Path $root $RuntimeOutput
+$playerInfoOutputPath = Join-Path $root $PlayerInfoOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
 
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $runtimeOutputPath | Out-Null
+New-Item -ItemType Directory -Force -Path $playerInfoOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $tempPath | Out-Null
 
 function Extract-LegacyEntry {
@@ -53,6 +57,33 @@ function Extract-LegacyEntry {
     }
 
     Copy-Item $source $Destination -Force
+}
+
+function Extract-PlayerBarFrames {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$CharacterId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination
+    )
+
+    $archiveDirectory = "sprites/DefineSprite_$CharacterId"
+    & $SevenZip x $Archive "$archiveDirectory/*" "-o$tempPath" -y | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "7-Zip failed while extracting $archiveDirectory"
+    }
+
+    $sourceDirectory = Join-Path $tempPath ($archiveDirectory -replace '/', [IO.Path]::DirectorySeparatorChar)
+    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+
+    for ($frame = 1; $frame -le 100; $frame++) {
+        $source = Join-Path $sourceDirectory "$frame.png"
+        if (-not (Test-Path $source)) {
+            throw "Missing PlayerInfo frame: $source"
+        }
+        Copy-Item $source (Join-Path $Destination "$frame.png") -Force
+    }
 }
 
 $references = @{
@@ -103,6 +134,14 @@ try {
             Extract-LegacyEntry -Entry $entry -Destination $destination
         }
     }
+
+    Extract-PlayerBarFrames `
+        -CharacterId 674 `
+        -Destination (Join-Path $playerInfoOutputPath "hp")
+
+    Extract-PlayerBarFrames `
+        -CharacterId 269 `
+        -Destination (Join-Path $playerInfoOutputPath "mp")
 }
 finally {
     Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -110,4 +149,4 @@ finally {
 
 Write-Host "Legacy HUD references extracted to $outputPath"
 Write-Host "ControlBar button states extracted to $runtimeOutputPath"
-Write-Host "The runtime now uses the original ControlBar over/down states for mouse interaction."
+Write-Host "PlayerInfo HP/MP frames extracted to $playerInfoOutputPath"

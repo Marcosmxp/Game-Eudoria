@@ -24,6 +24,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
+    playerInfo_.initialize(renderer_.sprites());
     controlBar_.initialize(renderer_.sprites());
     legacyHudReference_.initialize(renderer_.sprites());
 
@@ -41,6 +42,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
 
         if (running && !IsIconic(window_)) {
             renderer_.beginFrame();
+            playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             renderer_.endFrame();

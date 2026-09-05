@@ -6,6 +6,7 @@
 #include "game/ui/ControlBar.h"
 #include "game/ui/HudWindowManager.h"
 #include "game/ui/LegacyHudReference.h"
+#include "game/ui/PlayerInfoHud.h"
 
 namespace eudoria {
 
@@ -24,6 +25,7 @@ private:
     WINDOWPLACEMENT windowPlacement_{sizeof(WINDOWPLACEMENT)};
     D3D11Renderer renderer_;
     game::ui::HudWindowManager hudWindows_;
+    game::ui::PlayerInfoHud playerInfo_;
     game::ui::ControlBar controlBar_;
     game::ui::LegacyHudReference legacyHudReference_;
 };
