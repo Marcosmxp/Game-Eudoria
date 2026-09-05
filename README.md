@@ -57,11 +57,11 @@ Controls in the bootstrap runtime:
 
 The original multi-GB dump stays local and is ignored by Git. Do not commit `resources_by_type`, extracted legacy assets, RAR/ZIP dumps, generated saves, or build output.
 
-Use the scanner instead:
+Scan the **decoded** resource directory so raw/download cache files are not indexed twice:
 
 ```powershell
 py tools/legacy_scanner/legacy_scanner.py `
-  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type" `
+  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type\decoded" `
   --output generated/legacy
 ```
 
