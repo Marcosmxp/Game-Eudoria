@@ -157,13 +157,23 @@ exit /b 0
 
 :ResolveRepo
 echo [2/6] Preparando repositorio...
-pushd "%SCRIPT_DIR%" >nul
-if exist ".git\HEAD" if exist "CMakeLists.txt" (
-    set "REPO_DIR=%CD%"
-) else (
-    set "REPO_DIR=%SCRIPT_DIR%Game-Eudoria"
+
+rem Default: create Game-Eudoria beside this BAT.
+for %%I in ("%SCRIPT_DIR%Game-Eudoria") do set "REPO_DIR=%%~fI"
+
+rem If this BAT is already inside the repository, use the current repository.
+if exist "%SCRIPT_DIR%.git\HEAD" (
+    if exist "%SCRIPT_DIR%CMakeLists.txt" (
+        for %%I in ("%SCRIPT_DIR%.") do set "REPO_DIR=%%~fI"
+    )
 )
-popd >nul
+
+if not defined REPO_DIR (
+    echo [ERRO] Nao foi possivel determinar a pasta do projeto.
+    exit /b 1
+)
+
+echo       Destino do projeto: !REPO_DIR!
 
 if not exist "!REPO_DIR!\.git\HEAD" (
     echo       Clonando !BRANCH!...
