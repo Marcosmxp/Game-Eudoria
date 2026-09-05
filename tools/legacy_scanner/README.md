@@ -4,11 +4,13 @@ Indexes the local Crystal Saga resource dump without copying the multi-GB assets
 
 ## Run
 
+Point the scanner at `resources_by_type\decoded` so the raw download cache is not indexed twice.
+
 From the repository root on Windows:
 
 ```powershell
 py tools/legacy_scanner/legacy_scanner.py `
-  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type" `
+  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type\decoded" `
   --output generated/legacy
 ```
 
@@ -16,7 +18,7 @@ For a full SHA-256 pass (considerably slower on ~5.89 GB):
 
 ```powershell
 py tools/legacy_scanner/legacy_scanner.py `
-  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type" `
+  "C:\Users\Marcos\Downloads\CrystalSaga\resources_by_type\decoded" `
   --output generated/legacy `
   --hash
 ```
