@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "eudoria.ui.controlBar",
   "legacy": {
     "class": "playerUI.ControlBarUIMC",
@@ -9,6 +9,30 @@
       "x": 600.0,
       "y": 640.0,
       "anchor": "bottom-center"
+    }
+  },
+  "runtimeComposition": {
+    "referenceCompositeUsedAtRuntime": false,
+    "base": {
+      "characterId": 3993,
+      "type": "DefineShape2",
+      "asset": "legacy_assets/runtime/ui/control_bar/base.png",
+      "x": 0.0,
+      "y": 0.0,
+      "rasterMinX": -584.0,
+      "rasterMinY": -67.0
+    },
+    "clipMask": {
+      "characterId": 4039,
+      "type": "DefineShape4",
+      "depth": 51,
+      "clipDepth": 52,
+      "bounds": {
+        "left": -507.85,
+        "top": -325.85,
+        "right": 513.15,
+        "bottom": -70.85
+      }
     }
   },
   "buttons": [
@@ -24,16 +48,38 @@
     {"id":"cmdTeam","characterId":4022,"x":328.8,"y":-44.0,"shortcut":"P","window":"team"},
     {"id":"cmdFamily","characterId":4005,"x":376.75,"y":-48.0,"shortcut":"G","window":"guild"},
     {"id":"cmdBlessGod","characterId":4032,"x":424.8,"y":-44.0,"shortcut":null,"window":null},
-    {"id":"cmdSys","characterId":4036,"x":-458.6,"y":-30.55,"shortcut":null,"window":"system"},
-    {"id":"cmdSoundSwitch","characterId":257,"x":-457.95,"y":-13.55,"type":"movieClip"},
-    {"id":"up","characterId":1821,"x":460.5,"y":-25.5},
-    {"id":"down","characterId":1818,"x":460.5,"y":-25.5}
+    {"id":"cmdSys","characterId":4036,"x":-458.6,"y":-30.55,"shortcut":null,"window":"system"}
   ],
+  "sound": {
+    "id": "cmdSoundSwitch",
+    "characterId": 257,
+    "x": -457.95,
+    "y": -13.55,
+    "frames": {
+      "on": 1,
+      "off": 2
+    }
+  },
   "totalIcon": {
     "characterId": 4130,
     "x": -18.2,
-    "y": -177.75,
+    "initialY": -177.75,
     "expandedY": -180.0,
-    "collapsedY": 0.0
+    "collapsedY": 0.0,
+    "tweenSeconds": 0.5,
+    "initiallyExpanded": true,
+    "toggleControls": {
+      "expand": {"id":"up","characterId":1821,"x":460.5,"y":-25.5},
+      "collapse": {"id":"down","characterId":1818,"x":460.5,"y":-25.5}
+    },
+    "configVisibility": {
+      "cmdGuixu": false,
+      "reason": "txt/iss.json does not define showGuixuConfig, so WorldConfig.getValue resolves false in the legacy constructor"
+    }
+  },
+  "behavior": {
+    "simpleButtonsUseMomentaryUpOverDownStates": true,
+    "windowVisibilityDoesNotLatchButtonDownState": true,
+    "referenceCompositeReservedForF2Comparison": true
   }
 }

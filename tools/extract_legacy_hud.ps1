@@ -138,6 +138,24 @@ try {
             -Destination (Join-Path $outputPath $entry.Value)
     }
 
+    # ControlBar runtime is assembled from the actual symbol4131 display list.
+    # reference/control_bar.reference.png remains F2-only and is not used by ControlBar.cpp.
+    Extract-LegacyEntry `
+        -Entry "shapes/3993.png" `
+        -Destination (Join-Path $runtimeOutputPath "base.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_4130/1.png" `
+        -Destination (Join-Path $runtimeOutputPath "total_icon.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_257/1.png" `
+        -Destination (Join-Path $runtimeOutputPath "sound/on.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_257/2.png" `
+        -Destination (Join-Path $runtimeOutputPath "sound/off.png")
+
     foreach ($button in $controlBarButtons.GetEnumerator()) {
         foreach ($state in $buttonStates.GetEnumerator()) {
             $entry = "buttons/DefineButton2_$($button.Value)/$($state.Value)"
@@ -175,6 +193,6 @@ finally {
 }
 
 Write-Host "Legacy HUD references extracted to $outputPath"
-Write-Host "ControlBar button states extracted to $runtimeOutputPath"
+Write-Host "ControlBar display-list assets extracted to $runtimeOutputPath"
 Write-Host "PlayerInfo HP/MP frames extracted to $playerInfoOutputPath"
 Write-Host "GameInfo runtime assets extracted to $gameInfoOutputPath"
