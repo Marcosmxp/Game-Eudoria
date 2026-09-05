@@ -25,9 +25,18 @@ private:
     static constexpr eudoria::ui::Point kRoot{1200.0F, 0.0F};
     static constexpr eudoria::ui::Anchor kAnchor = eudoria::ui::Anchor::TopRight;
 
-    // FFDec raster bounds for symbol1825 (playerUI.SmallMapUIMC).
-    static constexpr float kReferenceOriginX = 981.0F;
-    static constexpr float kReferenceOriginY = 8.5F;
+    // The complete FFDec raster for symbol1825 also contains totalIcon (1815),
+    // whose first-frame feature panel extends almost 1,000 px to the left.
+    // Runtime must not draw that entire reference as one sprite. These source
+    // coordinates isolate the payload-defined minimap chrome based on:
+    //   background character 1632 bounds = [-181, 0] x [0, 192]
+    //   symbol1825 FFDec raster origin    = (-981, -8.5)
+    static constexpr float kChromeSourceX = 800.0F;
+    static constexpr float kChromeSourceY = 8.5F;
+    static constexpr float kChromeWidth = 181.0F;
+    static constexpr float kChromeHeight = 192.0F;
+    static constexpr float kChromeLocalX = -181.0F;
+    static constexpr float kChromeLocalY = 0.0F;
 
     // Exact values recovered from SmallMapUI.as and symbol1825:
     // mapRootPoint.x = -141, mapRootPoint.y = 34
