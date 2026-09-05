@@ -11,14 +11,13 @@ rem - Detects/installs Git, CMake and 7-Zip when possible
 rem - Detects Visual Studio 2022 C++ Build Tools
 rem - Finds Crystal Saga.rar and img.rar (or opens a file picker)
 rem - Extracts the real legacy HUD payload
-rem - Extracts one minimap from img.rar
+rem - Extracts one existing minimap from img.rar for UI preview
 rem - Builds Eudoria x64 Release
 rem - Starts Eudoria.exe from the repository root
 rem ================================================================
 
 set "REPO_URL=https://github.com/Marcosmxp/Game-Eudoria.git"
 set "BRANCH=development"
-set "MAP_ID=mz620"
 set "SCRIPT_DIR=%~dp0"
 set "REPO_DIR="
 set "GIT_EXE="
@@ -243,10 +242,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_legacy_
 if errorlevel 1 (popd >nul & exit /b 1)
 
 if defined IMG_ARCHIVE (
-    echo       Extraindo minimapa !MAP_ID! de img.rar...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_minimap.ps1" -Archive "!IMG_ARCHIVE!" -MapId "!MAP_ID!" -SevenZip "!SEVENZIP_EXE!"
+    echo       Extraindo um minimapa existente de img.rar para preview da UI...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_minimap.ps1" -Archive "!IMG_ARCHIVE!" -SevenZip "!SEVENZIP_EXE!"
     if errorlevel 1 (
-        echo [AVISO] O minimapa !MAP_ID! nao foi extraido. O restante continuara normalmente.
+        echo [AVISO] Nenhum minimapa de preview foi extraido. O restante continuara normalmente.
     )
 )
 popd >nul
