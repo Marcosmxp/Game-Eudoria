@@ -7,12 +7,26 @@
   "taskEntryExport": "symbol5665",
   "source": {
     "layout": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerUI.as",
-    "skin": "Crystal Saga.rar/sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png"
+    "taskEntryBehavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerBoxUI.as",
+    "skin": "Crystal Saga.rar/sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png",
+    "taskEntrySkin": "Crystal Saga.rar/sprites/DefineSprite_5665_playerUI.TaskTracerBoxUIMC_playerUI.TaskTracerBoxUIMC/1.png"
   },
   "defaultRoot": {
     "x": 960,
     "y": 230,
     "anchor": "top-right"
+  },
+  "payloadGeometry": {
+    "pointTask": { "x": 0, "y": 0 },
+    "scrollTask": { "x": 224, "y": 0 },
+    "contentViewport": { "width": 224, "height": 180 },
+    "cmdHaveTask": { "x": 32.1, "y": -19 },
+    "cmdCanReceiveTask": { "x": 122, "y": -19 },
+    "taskEntry": {
+      "txtTaskName": { "x": 5, "y": 5, "width": 168, "height": 29, "fontPx": 10, "color": "#FFCC00" },
+      "txtTaskCondition": { "x": 5, "y": 33.7, "width": 220, "fontPx": 10, "color": "#FFFFFF" },
+      "txtViewTask": { "x": 166, "y": 5, "width": 59, "height": 27, "fontPx": 10, "color": "#CCFF00" }
+    }
   },
   "behavior": {
     "draggableBy": "titleBox",
@@ -21,23 +35,38 @@
     "refreshIntervalMs": 2000,
     "taskSort": "taskKind numeric ascending",
     "activeTab": "cmdHaveTask",
-    "availableTab": "cmdCanReceiveTask"
+    "availableTab": "cmdCanReceiveTask",
+    "activeTaskNameClick": "toggle txtTaskCondition",
+    "viewTaskClick": "open quest window for task id",
+    "scroll": "contentHeight - viewportHeight"
   },
   "runtimeMilestone": {
-    "part": 1,
+    "part": 2,
     "implemented": [
       "payload chrome",
       "top-right default placement",
       "dragging by title bar",
       "collapse and expand",
-      "reset to original position on viewport resize"
+      "reset to original position on viewport resize",
+      "native task text rendering",
+      "numeric taskKind sorting",
+      "2000ms refresh cadence",
+      "active and available modes",
+      "mouse wheel scrolling",
+      "task entry expand/collapse",
+      "View Task opens the local Quests window state",
+      "dynamic task entry height",
+      "content clipping to the legacy viewport"
+    ],
+    "temporary": [
+      "pre-alpha fixture task data in Win32Application until the offline TaskManager is connected",
+      "English View Task label until the legacy diversity/localization catalog is imported"
     ],
     "next": [
-      "task list text",
-      "active and available tabs",
-      "scroll position",
-      "task entry expand/collapse",
-      "quest link actions"
+      "offline TaskManager data binding",
+      "legacy localization catalog",
+      "NPC/map link actions inside task condition text",
+      "native scrollbar thumb synchronized with scrollPosition"
     ]
   }
 }

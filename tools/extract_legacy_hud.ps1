@@ -93,6 +93,7 @@ $references = @{
     "sprites/DefineSprite_4131_playerUI.ControlBarUIMC_playerUI.ControlBarUIMC/1.png" = "control_bar.reference.png"
     "sprites/DefineSprite_1825_playerUI.SmallMapUIMC_playerUI.SmallMapUIMC/1.png" = "small_map.reference.png"
     "sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png" = "task_tracer.reference.png"
+    "sprites/DefineSprite_5665_playerUI.TaskTracerBoxUIMC_playerUI.TaskTracerBoxUIMC/1.png" = "task_tracer_box.reference.png"
 }
 
 $controlBarButtons = [ordered]@{

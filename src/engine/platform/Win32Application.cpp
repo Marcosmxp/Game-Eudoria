@@ -24,13 +24,25 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
-    // Runtime HUD assets come from the Crystal Saga payload. Screenshots are
-    // comparison references only and are never used as implementation assets.
     playerInfo_.initialize(renderer_.sprites());
     hudChrome_.initialize(renderer_.sprites());
     controlBar_.initialize(renderer_.sprites());
     smallMap_.initialize(renderer_.sprites());
     taskTracer_.initialize(renderer_.sprites());
+
+    // Temporary pre-alpha fixture used only to exercise the reconstructed UI
+    // until the offline TaskManager is connected. UI geometry and behavior still
+    // come from the legacy SWF/ActionScript payload, not screenshots.
+    taskTracer_.setTrackedTasks({
+        {1001, 1, L"Eudoria reconstruction", L"TaskTracer native runtime active.", true},
+        {1002, 2, L"Legacy UI payload", L"HUD geometry is reproduced from assets.swf and ActionScript.", true},
+        {1003, 3, L"Offline game systems", L"Connect the local quest manager to replace this development fixture.", false},
+    });
+    taskTracer_.setAvailableTasks({
+        {2001, L"Available task fixture", L"Offline TaskManager pending"},
+        {2002, L"Payload integration", L"Local quest data source pending"},
+    });
+
     legacyHudReference_.initialize(renderer_.sprites());
 
     MSG message{};
@@ -46,6 +58,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         }
 
         if (running && !IsIconic(window_)) {
+            taskTracer_.update();
             renderer_.beginFrame();
             hudChrome_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
@@ -168,7 +181,8 @@ LRESULT Win32Application::handleMessage(
             static_cast<float>(GET_X_LPARAM(lParam)),
             static_cast<float>(GET_Y_LPARAM(lParam)),
             renderer_.width(),
-            renderer_.height());
+            renderer_.height(),
+            hudWindows_);
         controlBar_.onMouseUp(
             static_cast<float>(GET_X_LPARAM(lParam)),
             static_cast<float>(GET_Y_LPARAM(lParam)),
@@ -176,6 +190,20 @@ LRESULT Win32Application::handleMessage(
             renderer_.height(),
             hudWindows_);
         return 0;
+
+    case WM_MOUSEWHEEL: {
+        POINT clientPoint{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        ScreenToClient(window, &clientPoint);
+        if (taskTracer_.onMouseWheel(
+                static_cast<float>(clientPoint.x),
+                static_cast<float>(clientPoint.y),
+                GET_WHEEL_DELTA_WPARAM(wParam),
+                renderer_.width(),
+                renderer_.height())) {
+            return 0;
+        }
+        break;
+    }
 
     case WM_KEYDOWN:
         if (wParam == VK_F2) {

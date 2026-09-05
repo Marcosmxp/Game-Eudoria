@@ -47,6 +47,8 @@ public:
         float alpha = 1.0F);
     void shutdown();
 
+    [[nodiscard]] ID3D11Device* device() const noexcept { return device_; }
+
 private:
     struct Vertex final {
         float x;

@@ -11,6 +11,7 @@ add_executable(Eudoria WIN32
     src/engine/platform/Win32Application.cpp
     src/engine/render/D3D11Renderer.cpp
     src/engine/render/SpriteRenderer.cpp
+    src/engine/render/TextRasterizer.cpp
     src/game/ui/ControlBar.cpp
     src/game/ui/HudChrome.cpp
     src/game/ui/LegacyHudReference.cpp
@@ -28,6 +29,7 @@ target_link_libraries(Eudoria PRIVATE
     d3dcompiler
     windowscodecs
     ole32
+    gdi32
 )
 
 if(MSVC)
