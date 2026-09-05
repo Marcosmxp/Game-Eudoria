@@ -27,11 +27,10 @@ private:
         SpriteTexture texture;
     };
 
-    // Roots come from the original ActionScript layout; raster origins come
-    // from the corresponding SWF-exported UIMC bounds, not screenshots.
-    std::array<Panel, 2> panels_{{
+    // GameInfo remains static chrome for now. TaskTracer has its own runtime
+    // implementation because the original ActionScript supports drag/collapse.
+    std::array<Panel, 1> panels_{{
         {L"game_info.reference.png", {0.0F, 570.0F}, eudoria::ui::Anchor::BottomLeft, 10.0F, 348.5F, {}},
-        {L"task_tracer.reference.png", {960.0F, 230.0F}, eudoria::ui::Anchor::TopRight, 2.0F, 38.0F, {}},
     }};
 };
 

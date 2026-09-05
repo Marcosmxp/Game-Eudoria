@@ -9,6 +9,7 @@
 #include "game/ui/LegacyHudReference.h"
 #include "game/ui/PlayerInfoHud.h"
 #include "game/ui/SmallMapHud.h"
+#include "game/ui/TaskTracerHud.h"
 
 namespace eudoria {
 
@@ -31,6 +32,7 @@ private:
     game::ui::HudChrome hudChrome_;
     game::ui::ControlBar controlBar_;
     game::ui::SmallMapHud smallMap_;
+    game::ui::TaskTracerHud taskTracer_;
     game::ui::LegacyHudReference legacyHudReference_;
 };
 

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "taskTracer",
+  "legacyClass": "playerUI.TaskTracerUIMC",
+  "legacyExport": "symbol4135",
+  "taskEntryClass": "playerUI.TaskTracerBoxUIMC",
+  "taskEntryExport": "symbol5665",
+  "source": {
+    "layout": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerUI.as",
+    "skin": "Crystal Saga.rar/sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png"
+  },
+  "defaultRoot": {
+    "x": 960,
+    "y": 230,
+    "anchor": "top-right"
+  },
+  "behavior": {
+    "draggableBy": "titleBox",
+    "collapseControl": "§_-ny§",
+    "collapseRemoves": ["pointTask", "scrollTask"],
+    "refreshIntervalMs": 2000,
+    "taskSort": "taskKind numeric ascending",
+    "activeTab": "cmdHaveTask",
+    "availableTab": "cmdCanReceiveTask"
+  },
+  "runtimeMilestone": {
+    "part": 1,
+    "implemented": [
+      "payload chrome",
+      "top-right default placement",
+      "dragging by title bar",
+      "collapse and expand",
+      "reset to original position on viewport resize"
+    ],
+    "next": [
+      "task list text",
+      "active and available tabs",
+      "scroll position",
+      "task entry expand/collapse",
+      "quest link actions"
+    ]
+  }
+}

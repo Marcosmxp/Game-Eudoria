@@ -18,6 +18,13 @@ struct SpriteTexture final {
     }
 };
 
+struct SpriteSourceRect final {
+    float x = 0.0F;
+    float y = 0.0F;
+    float width = 0.0F;
+    float height = 0.0F;
+};
+
 class SpriteRenderer final {
 public:
     SpriteRenderer() = default;
@@ -30,6 +37,14 @@ public:
     bool loadTexture(const std::wstring& path, SpriteTexture& texture) const;
     void begin(std::uint32_t width, std::uint32_t height);
     void draw(const SpriteTexture& texture, float x, float y, float width, float height, float alpha = 1.0F);
+    void drawRegion(
+        const SpriteTexture& texture,
+        const SpriteSourceRect& source,
+        float x,
+        float y,
+        float width,
+        float height,
+        float alpha = 1.0F);
     void shutdown();
 
 private:

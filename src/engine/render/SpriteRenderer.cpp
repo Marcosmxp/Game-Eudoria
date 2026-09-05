@@ -319,9 +319,48 @@ void SpriteRenderer::draw(
     const float width,
     const float height,
     const float alpha) {
-    if (!context_ || !texture.valid() || viewportWidth_ == 0 || viewportHeight_ == 0 || width <= 0.0F || height <= 0.0F) {
+    drawRegion(
+        texture,
+        SpriteSourceRect{
+            0.0F,
+            0.0F,
+            static_cast<float>(texture.width),
+            static_cast<float>(texture.height),
+        },
+        x,
+        y,
+        width,
+        height,
+        alpha);
+}
+
+void SpriteRenderer::drawRegion(
+    const SpriteTexture& texture,
+    const SpriteSourceRect& source,
+    const float x,
+    const float y,
+    const float width,
+    const float height,
+    const float alpha) {
+    if (!context_ || !texture.valid() || viewportWidth_ == 0 || viewportHeight_ == 0 ||
+        width <= 0.0F || height <= 0.0F || source.width <= 0.0F || source.height <= 0.0F) {
         return;
     }
+
+    const float textureWidth = static_cast<float>(texture.width);
+    const float textureHeight = static_cast<float>(texture.height);
+    const float sx = std::clamp(source.x, 0.0F, textureWidth);
+    const float sy = std::clamp(source.y, 0.0F, textureHeight);
+    const float sw = std::clamp(source.width, 0.0F, textureWidth - sx);
+    const float sh = std::clamp(source.height, 0.0F, textureHeight - sy);
+    if (sw <= 0.0F || sh <= 0.0F) {
+        return;
+    }
+
+    const float u0 = sx / textureWidth;
+    const float v0 = sy / textureHeight;
+    const float u1 = (sx + sw) / textureWidth;
+    const float v1 = (sy + sh) / textureHeight;
 
     const float left = (x / static_cast<float>(viewportWidth_)) * 2.0F - 1.0F;
     const float right = ((x + width) / static_cast<float>(viewportWidth_)) * 2.0F - 1.0F;
@@ -330,12 +369,12 @@ void SpriteRenderer::draw(
     const float a = std::clamp(alpha, 0.0F, 1.0F);
 
     const std::array<Vertex, 6> vertices{{
-        {left, top, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, a},
-        {right, top, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, a},
-        {right, bottom, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, a},
-        {left, top, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, a},
-        {right, bottom, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, a},
-        {left, bottom, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, a},
+        {left, top, u0, v0, 1.0F, 1.0F, 1.0F, a},
+        {right, top, u1, v0, 1.0F, 1.0F, 1.0F, a},
+        {right, bottom, u1, v1, 1.0F, 1.0F, 1.0F, a},
+        {left, top, u0, v0, 1.0F, 1.0F, 1.0F, a},
+        {right, bottom, u1, v1, 1.0F, 1.0F, 1.0F, a},
+        {left, bottom, u0, v1, 1.0F, 1.0F, 1.0F, a},
     }};
 
     D3D11_MAPPED_SUBRESOURCE mapped{};

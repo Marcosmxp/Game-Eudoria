@@ -24,12 +24,13 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
-    // All runtime HUD skins below are extracted from the Crystal Saga payload.
-    // Screenshots are comparison references only and are never loaded here.
+    // Runtime HUD assets come from the Crystal Saga payload. Screenshots are
+    // comparison references only and are never used as implementation assets.
     playerInfo_.initialize(renderer_.sprites());
     hudChrome_.initialize(renderer_.sprites());
     controlBar_.initialize(renderer_.sprites());
     smallMap_.initialize(renderer_.sprites());
+    taskTracer_.initialize(renderer_.sprites());
     legacyHudReference_.initialize(renderer_.sprites());
 
     MSG message{};
@@ -50,6 +51,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
             playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             smallMap_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
+            taskTracer_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             renderer_.endFrame();
         }
@@ -128,9 +130,15 @@ LRESULT Win32Application::handleMessage(
     switch (message) {
     case WM_SIZE:
         renderer_.resize(static_cast<std::uint32_t>(LOWORD(lParam)), static_cast<std::uint32_t>(HIWORD(lParam)));
+        taskTracer_.onViewportChanged();
         return 0;
 
     case WM_MOUSEMOVE:
+        taskTracer_.onMouseMove(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height());
         controlBar_.onMouseMove(
             static_cast<float>(GET_X_LPARAM(lParam)),
             static_cast<float>(GET_Y_LPARAM(lParam)),
@@ -140,6 +148,11 @@ LRESULT Win32Application::handleMessage(
 
     case WM_LBUTTONDOWN:
         SetCapture(window);
+        taskTracer_.onMouseDown(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height());
         controlBar_.onMouseDown(
             static_cast<float>(GET_X_LPARAM(lParam)),
             static_cast<float>(GET_Y_LPARAM(lParam)),
@@ -151,6 +164,11 @@ LRESULT Win32Application::handleMessage(
         if (GetCapture() == window) {
             ReleaseCapture();
         }
+        taskTracer_.onMouseUp(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height());
         controlBar_.onMouseUp(
             static_cast<float>(GET_X_LPARAM(lParam)),
             static_cast<float>(GET_Y_LPARAM(lParam)),
