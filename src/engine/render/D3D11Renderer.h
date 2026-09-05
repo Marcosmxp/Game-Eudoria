@@ -1,12 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <d3d11.h>
+#include <dxgi.h>
 #include <wrl/client.h>
-
-struct ID3D11Device;
-struct ID3D11DeviceContext;
-struct ID3D11RenderTargetView;
-struct IDXGISwapChain;
 
 namespace eudoria {
 
