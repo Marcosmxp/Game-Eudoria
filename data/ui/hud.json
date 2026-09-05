@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "eudoria.ui.hud",
   "legacyStage": {
     "width": 1200,
@@ -22,22 +22,47 @@
     {
       "id": "playerInfo",
       "legacySymbol": "playerUI.PlayerInfoUIMC",
+      "legacyExport": "symbol3550",
+      "characterId": 3550,
+      "root": { "x": 0, "y": 0 },
       "anchor": "top-left"
     },
     {
-      "id": "smallMap",
-      "legacySymbol": "playerUI.SmallMapUIMC",
-      "anchor": "top-right"
-    },
-    {
-      "id": "taskTracer",
-      "legacySymbol": "playerUI.TaskTracerUIMC",
-      "anchor": "top-right"
+      "id": "gameInfo",
+      "legacySymbol": "playerUI.GameInfoUIMC",
+      "legacyExport": "symbol4343",
+      "characterId": 4343,
+      "root": { "x": 0, "y": 570 },
+      "anchor": "bottom-left",
+      "notes": "GameInfoUI sets y = stageHeight - 70. This is the chat/message HUD visible at bottom-left."
     },
     {
       "id": "controlBar",
       "legacySymbol": "playerUI.ControlBarUIMC",
-      "anchor": "bottom-center"
+      "legacyExport": "symbol4131",
+      "characterId": 4131,
+      "root": { "x": 600, "y": 640 },
+      "anchor": "bottom-center",
+      "notes": "ControlBarUI sets x = stageWidth / 2 and y = stageHeight."
+    },
+    {
+      "id": "smallMap",
+      "legacySymbol": "playerUI.SmallMapUIMC",
+      "legacyExport": "symbol1825",
+      "characterId": 1825,
+      "root": { "x": 1200, "y": 0 },
+      "anchor": "top-right",
+      "contentSource": "img.rar",
+      "notes": "SmallMapUI sets x = stageWidth. The minimap image content comes from img.rar; this symbol is the minimap HUD/frame and controls."
+    },
+    {
+      "id": "taskTracer",
+      "legacySymbol": "playerUI.TaskTracerUIMC",
+      "legacyExport": "symbol4135",
+      "characterId": 4135,
+      "root": { "x": 960, "y": 230 },
+      "anchor": "top-right",
+      "notes": "TaskTracerUI sets x = stageWidth - titleBox.width and y = 230. titleBox is 240px wide in the legacy display list."
     }
   ],
   "windows": {
