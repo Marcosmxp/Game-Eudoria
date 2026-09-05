@@ -1,75 +1,68 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "eudoria.ui.playerInfo",
   "legacy": {
     "class": "playerUI.PlayerInfoUIMC",
     "export": "symbol3550",
     "characterId": 3550,
-    "root": {
-      "x": 0.0,
-      "y": 0.0,
-      "anchor": "top-left"
-    },
-    "rasterOrigin": {
-      "x": -92.0,
-      "y": -21.0,
-      "derivation": "bgBox character 3505 is placed at (0,0); its raster starts at local (-20,-20) and appears at source (72,1) inside the exported symbol3550 raster"
-    }
+    "root": { "x": 0.0, "y": 0.0, "anchor": "top-left" },
+    "stageScaleMode": "no-scale"
   },
-  "vitals": {
-    "hp": {
-      "characterId": 674,
-      "x": 145.0,
-      "y": 31.0,
-      "scaleX": 0.8667755,
-      "scaleY": 0.78125,
-      "frames": 100,
-      "minimumFrame": 2
-    },
-    "mp": {
-      "characterId": 269,
-      "x": 145.0,
-      "y": 44.5,
-      "scaleX": 0.8662415,
-      "scaleY": 0.8125,
-      "frames": 100,
-      "minimumFrame": 2
-    },
-    "petHp": {
-      "characterId": 674,
-      "x": 140.35,
-      "y": 81.55,
-      "scaleX": 0.666626,
-      "scaleY": 0.8125,
-      "frames": 100,
-      "minimumFrame": 2
-    },
-    "petMp": {
-      "characterId": 269,
-      "x": 140.2,
-      "y": 94.35,
-      "scaleX": 0.658356,
-      "scaleY": 0.787506,
-      "frames": 100,
-      "minimumFrame": 2
-    }
+  "displayList": [
+    {"depth":1,"id":"bgBox","characterId":3505,"x":0.0,"y":0.0,"behavior":"frame 1 normal, frame 2 combat"},
+    {"depth":3,"id":"petFrame","characterId":3507,"x":0.0,"y":0.0},
+    {"depth":4,"id":"hpBKBG","characterId":3509,"x":157.7,"y":53.2,"scaleX":1.0},
+    {"depth":6,"id":"mpBKBG","characterId":3509,"x":160.1,"y":53.0,"scaleX":-1.0},
+    {"depth":8,"id":"petHpBKBG","characterId":3509,"x":143.75,"y":102.2,"scaleX":1.0},
+    {"depth":10,"id":"petMpBKBG","characterId":3509,"x":147.0,"y":102.0,"scaleX":-1.0},
+    {"depth":12,"id":"divider","characterId":3511,"x":0.0,"y":0.0},
+    {"depth":13,"id":"barBKHP","characterId":3514,"x":146.7,"y":56.0,"frames":100},
+    {"depth":17,"id":"barBKMP","characterId":3517,"x":160.1,"y":56.0,"frames":100},
+    {"depth":21,"id":"hpBar","characterId":674,"x":145.0,"y":31.0,"scaleX":0.8667755,"scaleY":0.78125,"frames":100,"minimumFrame":2},
+    {"depth":26,"id":"mpBar","characterId":269,"x":145.0,"y":44.5,"scaleX":0.8662415,"scaleY":0.8125,"frames":100,"minimumFrame":2},
+    {"depth":33,"id":"petHpBar","characterId":674,"x":140.35,"y":81.55,"scaleX":0.666626,"scaleY":0.8125,"frames":100},
+    {"depth":38,"id":"petMpBar","characterId":269,"x":140.2,"y":94.35,"scaleX":0.658356,"scaleY":0.787506,"frames":100},
+    {"depth":45,"id":"barPetBKHP","characterId":3514,"x":133.3,"y":105.35,"frames":100},
+    {"depth":49,"id":"barPetBKMP","characterId":3517,"x":146.7,"y":105.35,"frames":100},
+    {"depth":53,"id":"bkHpMask","characterId":3519,"x":158.0,"y":53.65,"frames":100},
+    {"depth":57,"id":"bkMpMask","characterId":3519,"x":160.1,"y":53.65,"scaleX":-0.9792175,"frames":100},
+    {"depth":61,"id":"bkPetHpMask","characterId":3519,"x":144.45,"y":103.2,"frames":100},
+    {"depth":65,"id":"bkPetMpMask","characterId":3519,"x":146.55,"y":103.2,"scaleX":-0.9792175,"frames":100},
+    {"depth":69,"id":"txtName","characterId":3520,"x":119.0,"y":10.0,"font":"Arial 10","color":"#FFFFFF","align":"center"},
+    {"depth":70,"id":"txtLevel","characterId":3521,"x":72.0,"y":54.5,"font":"Arial 12","color":"#FFFFFF","align":"center"},
+    {"depth":71,"id":"txtHp","characterId":3522,"x":83.95,"y":26.0,"font":"Arial 9","color":"#FFDFDF","align":"center"},
+    {"depth":72,"id":"txtMp","characterId":3523,"x":83.95,"y":39.0,"font":"Arial 9","color":"#BFE6FF","align":"center"},
+    {"depth":73,"id":"headIconPoint","characterId":181,"x":4.0,"y":4.0,"dynamicChild":"HeadIconCode.getHeadIconByInt"},
+    {"depth":75,"id":"pointPetIcon","characterId":181,"x":52.0,"y":77.0,"dynamicChild":"GameItemManager.getItemIcon"},
+    {"depth":77,"id":"txtPK","characterId":3524,"x":71.0,"y":3.0,"font":"Arial 10","color":"#FFFFFF","initialText":"Pk"},
+    {"depth":78,"id":"cmdFateSkill","characterId":3529,"x":229.5,"y":36.25},
+    {"depth":81,"id":"cmdPetAction","characterId":3532,"x":204.95,"y":93.35},
+    {"depth":83,"id":"txtPetAction","characterId":3533,"x":192.95,"y":87.05,"font":"Arial 10","color":"#FFFF00","initialText":"Attack"},
+    {"depth":84,"id":"txtPetHP","characterId":3534,"x":92.95,"y":76.0,"font":"Arial 9","color":"#FFDDDD"},
+    {"depth":85,"id":"txtPetMP","characterId":3535,"x":92.95,"y":89.35,"font":"Arial 9","color":"#B9E3FF"},
+    {"depth":86,"id":"txtPetLevel","characterId":3536,"x":85.95,"y":102.4,"font":"Arial 9","color":"#FFFFFF"},
+    {"depth":87,"id":"fpsIcon","characterId":3541,"x":203.0,"y":0.0,"frameLabels":{"1":"fast","2":"medium","3":"slow"}},
+    {"depth":90,"id":"pingIcon","characterId":3546,"x":215.0,"y":0.0,"frameLabels":{"1":"fast","2":"medium","3":"slow"}},
+    {"depth":93,"id":"teamLeaderIcon","characterId":3549,"x":12.0,"y":11.5,"initialVisible":false}
+  ],
+  "behavior": {
+    "hpAndMpMinimumFrame":2,
+    "petWithoutActivePet":"clear pet text/icon and set pet HP/MP bars to frame 1",
+    "fpsThresholds":{"slowMax":15,"mediumMax":25},
+    "pingThresholds":{"mediumAboveMs":200,"slowAboveMs":500},
+    "teamLeaderInitiallyVisible":false,
+    "fpsTextInitiallyVisible":false,
+    "pingTextInitiallyVisible":false
   },
-  "fields": [
-    {"id":"txtName","characterId":3520,"x":119.0,"y":10.0},
-    {"id":"txtLevel","characterId":3521,"x":72.0,"y":54.5},
-    {"id":"txtHp","characterId":3522,"x":83.95,"y":26.0},
-    {"id":"txtMp","characterId":3523,"x":83.95,"y":39.0},
-    {"id":"headIconPoint","characterId":181,"x":4.0,"y":4.0},
-    {"id":"pointPetIcon","characterId":181,"x":52.0,"y":77.0},
-    {"id":"txtPK","characterId":3524,"x":71.0,"y":3.0},
-    {"id":"cmdFateSkill","characterId":3529,"x":229.5,"y":36.25},
-    {"id":"cmdPetAction","characterId":3532,"x":204.95,"y":93.35},
-    {"id":"txtPetAction","characterId":3533,"x":192.95,"y":87.05},
-    {"id":"txtPetHP","characterId":3534,"x":92.95,"y":76.0},
-    {"id":"txtPetMP","characterId":3535,"x":92.95,"y":89.35},
-    {"id":"txtPetLevel","characterId":3536,"x":85.95,"y":102.4},
-    {"id":"fpsIcon","characterId":3541,"x":203.0,"y":0.0},
-    {"id":"pingIcon","characterId":3546,"x":215.0,"y":0.0},
-    {"id":"teamLeaderIcon","characterId":3549,"x":12.0,"y":11.5}
+  "runtime": {
+    "compositeReference":"F2 only",
+    "headFallback":"HeadIcon_000 (symbol5882) until player-specific ta3 portrait resources are wired",
+    "petIcon":"left empty when no pet is active"
+  },
+  "sources": [
+    "Crystal Saga.rar -> assets.swf -> symbol3550",
+    "Crystal Saga.rar -> PlayerInfoUI.as",
+    "Crystal Saga.rar -> PlayerInfoUIMC.as",
+    "Crystal Saga.rar -> HeadIconCode.as"
   ]
 }
