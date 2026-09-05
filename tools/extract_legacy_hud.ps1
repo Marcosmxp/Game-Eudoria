@@ -10,6 +10,8 @@ param(
 
     [string]$GameInfoOutput = "legacy_assets/runtime/ui/game_info",
 
+    [string]$SmallMapOutput = "legacy_assets/runtime/ui/small_map",
+
     [string]$SevenZip = "7z"
 )
 
@@ -28,12 +30,14 @@ $outputPath = Join-Path $root $Output
 $runtimeOutputPath = Join-Path $root $RuntimeOutput
 $playerInfoOutputPath = Join-Path $root $PlayerInfoOutput
 $gameInfoOutputPath = Join-Path $root $GameInfoOutput
+$smallMapOutputPath = Join-Path $root $SmallMapOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
 
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $runtimeOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $playerInfoOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $gameInfoOutputPath | Out-Null
+New-Item -ItemType Directory -Force -Path $smallMapOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $tempPath | Out-Null
 
 function Extract-LegacyEntry {
@@ -118,6 +122,21 @@ $controlBarButtons = [ordered]@{
     "down"        = 1818
 }
 
+$smallMapButtons = [ordered]@{
+    "zoom_out"    = 1638
+    "zoom_in"     = 1642
+    "map"         = 1651
+    "world_map"   = 1660
+    "shop"        = 1670
+    "days_prompt" = 1673
+    "ranking"     = 1676
+    "day_bonus"   = 1679
+    "drg_lottery" = 1691
+    "result"      = 1701
+    "collapse"    = 1821
+    "expand"      = 1818
+}
+
 $buttonStates = [ordered]@{
     "up"      = "1_up.png"
     "over"    = "2_over.png"
@@ -164,6 +183,45 @@ try {
         }
     }
 
+    # SmallMap runtime is now reconstructed from character1825's real display
+    # list instead of a large first-frame composite. This preserves independent
+    # visibility/interaction for totalIcon and the surrounding controls.
+    Extract-LegacyEntry `
+        -Entry "shapes/1632.png" `
+        -Destination (Join-Path $smallMapOutputPath "base.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1634/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "player_center.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1647/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "online_bonus.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1656/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "remote_display.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1683/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "skill_effect.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1694/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "misc_1694.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_1815/1.png" `
+        -Destination (Join-Path $smallMapOutputPath "total_icon.png")
+
+    foreach ($button in $smallMapButtons.GetEnumerator()) {
+        foreach ($state in $buttonStates.GetEnumerator()) {
+            $entry = "buttons/DefineButton2_$($button.Value)/$($state.Value)"
+            $destination = Join-Path $smallMapOutputPath "$($button.Key)/$($state.Key).png"
+            Extract-LegacyEntry -Entry $entry -Destination $destination
+        }
+    }
+
     Extract-LegacyEntry `
         -Entry "sprites/DefineSprite_4318_somcUI_fla.ScopeButton_423_somcUI_fla.ScopeButton_423/1.png" `
         -Destination (Join-Path $gameInfoOutputPath "scope_button/normal.png")
@@ -194,5 +252,6 @@ finally {
 
 Write-Host "Legacy HUD references extracted to $outputPath"
 Write-Host "ControlBar display-list assets extracted to $runtimeOutputPath"
+Write-Host "SmallMap display-list assets extracted to $smallMapOutputPath"
 Write-Host "PlayerInfo HP/MP frames extracted to $playerInfoOutputPath"
 Write-Host "GameInfo runtime assets extracted to $gameInfoOutputPath"
