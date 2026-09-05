@@ -34,6 +34,14 @@ bool SmallMapHud::initialize(
     load(L"result/up.png", result_);
     load(L"total_icon.png", totalIcon_);
     load(L"collapse/up.png", collapse_);
+    load(L"expand/up.png", expand_);
+
+    featureExpanded_ = true;
+    featureVisible_ = true;
+    featureAnimating_ = false;
+    featureY_ = kFeatureInitialY;
+    featureAnimationFromY_ = kFeatureInitialY;
+    featureAnimationTargetY_ = kFeatureInitialY;
 
     loadMinimap(renderer, minimapRoot);
     return loadedAny;
@@ -64,6 +72,70 @@ bool SmallMapHud::loadMinimap(SpriteRenderer& renderer, const std::filesystem::p
     }
 
     return false;
+}
+
+void SmallMapHud::update() noexcept {
+    if (!featureAnimating_) {
+        return;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    const float elapsed = std::chrono::duration<float>(now - featureAnimationStart_).count();
+    const float t = std::clamp(elapsed / kFeatureAnimationSeconds, 0.0F, 1.0F);
+
+    // Smoothstep gives the same visual intent as the short TweenLite motion
+    // without introducing a Flash-era tween dependency into the native client.
+    const float eased = t * t * (3.0F - (2.0F * t));
+    featureY_ = featureAnimationFromY_ +
+        ((featureAnimationTargetY_ - featureAnimationFromY_) * eased);
+
+    if (t >= 1.0F) {
+        featureY_ = featureAnimationTargetY_;
+        featureAnimating_ = false;
+        if (!featureExpanded_) {
+            featureVisible_ = false;
+        }
+    }
+}
+
+void SmallMapHud::animateFeaturePanel(const bool expand) noexcept {
+    featureExpanded_ = expand;
+    featureVisible_ = true;
+    featureAnimating_ = true;
+    featureAnimationFromY_ = featureY_;
+    featureAnimationTargetY_ = expand ? kFeatureExpandedY : kFeatureCollapsedY;
+    featureAnimationStart_ = std::chrono::steady_clock::now();
+}
+
+bool SmallMapHud::onMouseUp(
+    const float mouseX,
+    const float mouseY,
+    const std::uint32_t viewportWidth,
+    const std::uint32_t viewportHeight) noexcept {
+    const auto local = toLocal(mouseX, mouseY, viewportWidth, viewportHeight);
+    if (!kFeatureToggleHit.contains(local)) {
+        return false;
+    }
+
+    animateFeaturePanel(!featureExpanded_);
+    return true;
+}
+
+eudoria::ui::Point SmallMapHud::toLocal(
+    const float mouseX,
+    const float mouseY,
+    const std::uint32_t viewportWidth,
+    const std::uint32_t viewportHeight) noexcept {
+    const eudoria::ui::LegacyViewport viewport{
+        static_cast<float>(viewportWidth),
+        static_cast<float>(viewportHeight),
+    };
+    const float scale = std::max(viewport.scale(), 0.0001F);
+    const auto root = viewport.mapRoot(kRoot, kAnchor);
+    return {
+        (mouseX - root.x) / scale,
+        (mouseY - root.y) / scale,
+    };
 }
 
 void SmallMapHud::drawPlaced(
@@ -97,10 +169,9 @@ void SmallMapHud::render(
     const auto root = viewport.mapRoot(kRoot, kAnchor);
 
     // symbol1825 depth 1: background character1632.
-    // shapes/1632.png is the real payload raster with local bounds [-181,0..192].
     drawPlaced(renderer, base_, root, {0.0F, 0.0F}, {-181.0F, 0.0F}, scale);
 
-    // depth 2 mapRootPoint: the actual p<mapId>.jpg minimap belongs here.
+    // depth 2 mapRootPoint: img.rar supplies p<mapId>.jpg here.
     if (minimap_.valid()) {
         renderer.draw(
             minimap_,
@@ -110,13 +181,10 @@ void SmallMapHud::render(
             kViewportHeight * scale);
     }
 
-    // depth 4 playerCenter, character1634. Its recursive SWF bounds are -3..3.
+    // depth 4 playerCenter, character1634.
     drawPlaced(renderer, playerCenter_, root, {-78.65F, 97.35F}, {-3.0F, -3.0F}, scale);
 
-    // Direct SmallMap children in the same display-list order recovered from
-    // assets.swf. Raster offsets were recovered by matching each independent
-    // exported character back to its symbol1825 placement; screenshots are not
-    // used as geometry input.
+    // Direct children in payload display-list order.
     drawPlaced(renderer, zoomOut_, root, {-41.10F, 156.70F}, {-30.90F, -17.20F}, scale);
     drawPlaced(renderer, zoomIn_, root, {-23.10F, 156.70F}, {-30.90F, -17.20F}, scale);
     drawPlaced(renderer, onlineBonus_, root, {-216.70F, 163.00F}, {-35.30F, -35.50F}, scale);
@@ -124,30 +192,37 @@ void SmallMapHud::render(
     drawPlaced(renderer, remoteDisplay_, root, {-45.15F, 178.70F}, {-49.85F, -16.20F}, scale);
     drawPlaced(renderer, worldMapButton_, root, {-101.65F, 178.70F}, {-27.35F, -16.20F}, scale);
 
-    // cmdSite (1663) is intentionally omitted because SmallMapUI constructor
-    // explicitly sets cmdSite.visible = false.
+    // SmallMapUI constructor explicitly hides cmdSite (1663).
     drawPlaced(renderer, shop_, root, {-170.50F, 162.35F}, {-19.50F, -21.85F}, scale);
     drawPlaced(renderer, daysPrompt_, root, {-167.00F, 125.35F}, {-16.00F, -17.85F}, scale);
     drawPlaced(renderer, ranking_, root, {-167.00F, 93.35F}, {-16.00F, -17.85F}, scale);
     drawPlaced(renderer, dayBonus_, root, {-167.00F, 61.35F}, {-16.00F, -17.85F}, scale);
     drawPlaced(renderer, skillEffect_, root, {-74.10F, 178.70F}, {-49.90F, -16.20F}, scale);
-
-    // cmdDrgLottery and cmdWheelAward both use character1691 at the same
-    // placement in this payload. Their configured visibility resolves to a
-    // single visible raster, so drawing it once is pixel-equivalent.
     drawPlaced(renderer, drgLottery_, root, {-168.05F, 25.50F}, {-60.95F, -33.00F}, scale);
     drawPlaced(renderer, misc1694_, root, {-17.10F, 178.70F}, {-13.90F, -15.20F}, scale);
     drawPlaced(renderer, result_, root, {-197.10F, 16.00F}, {-39.90F, -17.50F}, scale);
 
-    // depth 54: totalIcon character1815. The sprite starts expanded in
-    // SmallMapUI (mg = true). Its own FFDec raster starts at (-746.3, 0.55)
-    // relative to the character origin; keeping it independent restores the
-    // top icon panel without forcing the entire SmallMap composite onscreen.
-    drawPlaced(renderer, totalIcon_, root, {-229.70F, 47.95F}, {-746.30F, 0.55F}, scale);
+    // character1815 totalIcon. SmallMapUI's TweenLite moves only its y value;
+    // x remains exactly -229.7. The exported raster's own local top-left is
+    // (-746.3, 0.55), recovered from the payload character placement.
+    if (featureVisible_) {
+        drawPlaced(
+            renderer,
+            totalIcon_,
+            root,
+            {-229.70F, featureY_},
+            {-746.30F, 0.55F},
+            scale);
+    }
 
-    // depth 157: up/collapse control. SmallMapUI starts expanded, so 'up' is
-    // visible and 'down' is hidden until the interaction is migrated.
-    drawPlaced(renderer, collapse_, root, {-219.65F, 45.95F}, {-7.35F, -10.45F}, scale);
+    // SmallMapUI flips up/down visibility immediately when the tween starts.
+    drawPlaced(
+        renderer,
+        featureExpanded_ ? collapse_ : expand_,
+        root,
+        {-219.65F, 45.95F},
+        {-7.35F, -10.45F},
+        scale);
 }
 
 } // namespace eudoria::game::ui
