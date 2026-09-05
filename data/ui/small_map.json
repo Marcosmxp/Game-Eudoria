@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "eudoria.ui.smallMap",
   "legacyClass": "playerUI.SmallMapUIMC",
   "legacyExport": "symbol1825",
@@ -11,10 +11,9 @@
   "root": { "x": 1200, "y": 0, "anchor": "top-right" },
   "rasterBounds": { "originX": 981, "originY": 8.5 },
   "chrome": {
-    "backgroundCharacterId": 1632,
-    "localBounds": { "left": -181, "top": 0, "right": 0, "bottom": 192 },
-    "referenceSourceRect": { "x": 800, "y": 8.5, "width": 181, "height": 192 },
-    "note": "The complete symbol1825 reference also contains totalIcon 1815. Runtime isolates the minimap chrome so the expandable feature panel is not forced visible as part of one composite texture."
+    "referenceSourceRect": { "x": 758, "y": 0, "width": 240, "height": 230 },
+    "localPosition": { "x": -223, "y": -8.5 },
+    "contains": "minimap frame plus direct SmallMap controls; excludes totalIcon 1815"
   },
   "mapRootPoint": {
     "x": -141,
@@ -40,6 +39,9 @@
     "characterId": 1815,
     "x": -229.7,
     "y": 47.95,
+    "referenceSourceRect": { "x": 5, "y": 57, "width": 752, "height": 209 },
+    "runtimeLocalPosition": { "x": -976, "y": 48.5 },
+    "initiallyExpanded": true,
     "expandedTargetY": 38,
     "collapsedTargetY": -150,
     "animationSeconds": 0.5
@@ -51,13 +53,14 @@
   },
   "sources": {
     "stage": "Crystal Saga.rar -> scripts/SomcGame.as -> initStage()",
-    "chrome": "Crystal Saga.rar -> assets.swf -> symbol1825 / character 1632",
+    "displayList": "Crystal Saga.rar -> assets.swf -> symbol1825",
     "behavior": "Crystal Saga.rar -> SmallMapUI.as",
     "minimap": "img.rar -> p<mapId>.jpg",
     "playableMap": "local multi-GB map assets"
   },
   "pending": [
-    "Migrate totalIcon 1815 into its own interactive native component instead of the full SmallMap reference composite.",
+    "Wire collapse/expand mouse interaction and TweenLite-equivalent 0.5s movement for totalIcon.",
+    "Split direct SmallMap controls into independent native button states as interaction is implemented.",
     "Connect minimap scrolling to local world coordinates when WorldState is implemented.",
     "Migrate player/monster/NPC/team markers from the original SmallMapUI update routine."
   ]
