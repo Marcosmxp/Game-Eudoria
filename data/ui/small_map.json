@@ -1,11 +1,21 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "eudoria.ui.smallMap",
   "legacyClass": "playerUI.SmallMapUIMC",
   "legacyExport": "symbol1825",
   "characterId": 1825,
+  "stage": {
+    "align": "top-left",
+    "scaleMode": "no-scale"
+  },
   "root": { "x": 1200, "y": 0, "anchor": "top-right" },
   "rasterBounds": { "originX": 981, "originY": 8.5 },
+  "chrome": {
+    "backgroundCharacterId": 1632,
+    "localBounds": { "left": -181, "top": 0, "right": 0, "bottom": 192 },
+    "referenceSourceRect": { "x": 800, "y": 8.5, "width": 181, "height": 192 },
+    "note": "The complete symbol1825 reference also contains totalIcon 1815. Runtime isolates the minimap chrome so the expandable feature panel is not forced visible as part of one composite texture."
+  },
   "mapRootPoint": {
     "x": -141,
     "y": 34,
@@ -22,18 +32,32 @@
     "cmdZoomOut": { "x": -41.1, "y": 156.7, "characterId": 1638 },
     "cmdZoomIn": { "x": -23.1, "y": 156.7, "characterId": 1642 },
     "cmdMap": { "x": -129.05, "y": 178.7, "characterId": 1651 },
-    "cmdWorldMap": { "x": -101.65, "y": 178.7, "characterId": 1660 }
+    "cmdWorldMap": { "x": -101.65, "y": 178.7, "characterId": 1660 },
+    "collapse": { "x": -219.65, "y": 45.95, "characterId": 1821 },
+    "expand": { "x": -219.65, "y": 45.95, "characterId": 1818 }
+  },
+  "featurePanel": {
+    "characterId": 1815,
+    "x": -229.7,
+    "y": 47.95,
+    "expandedTargetY": 38,
+    "collapsedTargetY": -150,
+    "animationSeconds": 0.5
   },
   "textFields": {
     "txtMapName": { "x": -139.95, "y": 9 },
-    "txtPlayerLocation": { "x": -138.4, "y": 151.65 }
+    "txtPlayerLocation": { "x": -138.4, "y": 151.65 },
+    "txtLineNumber": { "x": -139, "y": 36 }
   },
   "sources": {
-    "chrome": "Crystal Saga.rar -> playerUI.SmallMapUIMC / SmallMapUI.as",
+    "stage": "Crystal Saga.rar -> scripts/SomcGame.as -> initStage()",
+    "chrome": "Crystal Saga.rar -> assets.swf -> symbol1825 / character 1632",
+    "behavior": "Crystal Saga.rar -> SmallMapUI.as",
     "minimap": "img.rar -> p<mapId>.jpg",
     "playableMap": "local multi-GB map assets"
   },
   "pending": [
+    "Migrate totalIcon 1815 into its own interactive native component instead of the full SmallMap reference composite.",
     "Connect minimap scrolling to local world coordinates when WorldState is implemented.",
     "Migrate player/monster/NPC/team markers from the original SmallMapUI update routine."
   ]
