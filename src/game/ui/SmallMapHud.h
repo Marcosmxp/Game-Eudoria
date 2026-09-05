@@ -25,18 +25,30 @@ private:
     static constexpr eudoria::ui::Point kRoot{1200.0F, 0.0F};
     static constexpr eudoria::ui::Anchor kAnchor = eudoria::ui::Anchor::TopRight;
 
-    // The complete FFDec raster for symbol1825 also contains totalIcon (1815),
-    // whose first-frame feature panel extends almost 1,000 px to the left.
-    // Runtime must not draw that entire reference as one sprite. These source
-    // coordinates isolate the payload-defined minimap chrome based on:
-    //   background character 1632 bounds = [-181, 0] x [0, 192]
-    //   symbol1825 FFDec raster origin    = (-981, -8.5)
-    static constexpr float kChromeSourceX = 800.0F;
-    static constexpr float kChromeSourceY = 8.5F;
-    static constexpr float kChromeWidth = 181.0F;
-    static constexpr float kChromeHeight = 192.0F;
-    static constexpr float kChromeLocalX = -181.0F;
-    static constexpr float kChromeLocalY = 0.0F;
+    // Complete symbol1825 FFDec raster origin, recovered from the payload.
+    static constexpr float kReferenceOriginX = 981.0F;
+    static constexpr float kReferenceOriginY = 8.5F;
+
+    // Right-side SmallMap chrome and direct controls. This region begins after
+    // totalIcon's raster ends, so restoring it does not reintroduce the giant
+    // feature-panel spill that the previous full-composite render caused.
+    // source X 758 => local X -223 because symbol1825 raster origin is -981.
+    static constexpr float kChromeSourceX = 758.0F;
+    static constexpr float kChromeSourceY = 0.0F;
+    static constexpr float kChromeWidth = 240.0F;
+    static constexpr float kChromeHeight = 230.0F;
+    static constexpr float kChromeLocalX = -223.0F;
+    static constexpr float kChromeLocalY = -8.5F;
+
+    // SmallMap.totalIcon is character 1815 placed at (-229.7, 47.95). Matching
+    // the independent character1815 raster back into symbol1825 gives this
+    // exact non-overlapping source region in the payload reference.
+    static constexpr float kFeatureSourceX = 5.0F;
+    static constexpr float kFeatureSourceY = 57.0F;
+    static constexpr float kFeatureWidth = 752.0F;
+    static constexpr float kFeatureHeight = 209.0F;
+    static constexpr float kFeatureLocalX = -976.0F;
+    static constexpr float kFeatureLocalY = 48.5F;
 
     // Exact values recovered from SmallMapUI.as and symbol1825:
     // mapRootPoint.x = -141, mapRootPoint.y = 34
