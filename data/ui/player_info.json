@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "eudoria.ui.playerInfo",
   "legacy": {
     "class": "playerUI.PlayerInfoUIMC",
@@ -9,6 +9,11 @@
       "x": 0.0,
       "y": 0.0,
       "anchor": "top-left"
+    },
+    "rasterOrigin": {
+      "x": -92.0,
+      "y": -21.0,
+      "derivation": "bgBox character 3505 is placed at (0,0); its raster starts at local (-20,-20) and appears at source (72,1) inside the exported symbol3550 raster"
     }
   },
   "vitals": {
