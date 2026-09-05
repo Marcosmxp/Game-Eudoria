@@ -4,6 +4,8 @@ param(
 
     [string]$Output = "legacy_assets/reference/ui",
 
+    [string]$RuntimeOutput = "legacy_assets/runtime/ui/control_bar",
+
     [string]$SevenZip = "7z"
 )
 
@@ -19,11 +21,41 @@ if (-not (Get-Command $SevenZip -ErrorAction SilentlyContinue)) {
 
 $root = (Resolve-Path ".").Path
 $outputPath = Join-Path $root $Output
+$runtimeOutputPath = Join-Path $root $RuntimeOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
+
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
+New-Item -ItemType Directory -Force -Path $runtimeOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $tempPath | Out-Null
 
-$entries = @{
+function Extract-LegacyEntry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Entry,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination
+    )
+
+    & $SevenZip x $Archive $Entry "-o$tempPath" -y | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "7-Zip failed while extracting $Entry"
+    }
+
+    $source = Join-Path $tempPath ($Entry -replace '/', [IO.Path]::DirectorySeparatorChar)
+    if (-not (Test-Path $source)) {
+        throw "Expected extracted file was not found: $source"
+    }
+
+    $destinationDirectory = Split-Path $Destination -Parent
+    if ($destinationDirectory) {
+        New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+    }
+
+    Copy-Item $source $Destination -Force
+}
+
+$references = @{
     "scripts/_assets/assets.swf" = "assets.swf"
     "sprites/DefineSprite_3550_playerUI.PlayerInfoUIMC_playerUI.PlayerInfoUIMC/1.png" = "player_info.reference.png"
     "sprites/DefineSprite_4343_playerUI.GameInfoUIMC_playerUI.GameInfoUIMC/1.png" = "game_info.reference.png"
@@ -32,23 +64,50 @@ $entries = @{
     "sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png" = "task_tracer.reference.png"
 }
 
-try {
-    foreach ($entry in $entries.GetEnumerator()) {
-        & $SevenZip x $Archive $entry.Key "-o$tempPath" -y | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "7-Zip failed while extracting $($entry.Key)"
-        }
+$controlBarButtons = [ordered]@{
+    "cmdBag"      = 3997
+    "cmdQuest"    = 4001
+    "cmdFamily"   = 4005
+    "cmdPet"      = 4006
+    "cmdRole"     = 4010
+    "cmdSkill"    = 4014
+    "cmdFriend"   = 4018
+    "cmdTeam"     = 4022
+    "cmdRide"     = 4024
+    "cmdBot"      = 4028
+    "cmdBlessGod" = 4032
+    "cmdSys"      = 4036
+    "cmdWing"     = 4038
+    "up"          = 1821
+    "down"        = 1818
+}
 
-        $source = Join-Path $tempPath ($entry.Key -replace '/', [IO.Path]::DirectorySeparatorChar)
-        if (-not (Test-Path $source)) {
-            throw "Expected extracted file was not found: $source"
+$buttonStates = [ordered]@{
+    "up"      = "1_up.png"
+    "over"    = "2_over.png"
+    "down"    = "3_down.png"
+    "hittest" = "4_hittest.png"
+}
+
+try {
+    foreach ($entry in $references.GetEnumerator()) {
+        Extract-LegacyEntry `
+            -Entry $entry.Key `
+            -Destination (Join-Path $outputPath $entry.Value)
+    }
+
+    foreach ($button in $controlBarButtons.GetEnumerator()) {
+        foreach ($state in $buttonStates.GetEnumerator()) {
+            $entry = "buttons/DefineButton2_$($button.Value)/$($state.Value)"
+            $destination = Join-Path $runtimeOutputPath "$($button.Key)/$($state.Key).png"
+            Extract-LegacyEntry -Entry $entry -Destination $destination
         }
-        Copy-Item $source (Join-Path $outputPath $entry.Value) -Force
     }
 }
 finally {
     Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host "Legacy HUD reference files extracted to $outputPath"
-Write-Host "These PNGs are reconstruction references; runtime UI will be rebuilt from the SWF display list."
+Write-Host "Legacy HUD references extracted to $outputPath"
+Write-Host "ControlBar button states extracted to $runtimeOutputPath"
+Write-Host "The runtime now uses the original ControlBar over/down states for mouse interaction."

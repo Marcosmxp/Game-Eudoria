@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "eudoria.ui.controlBar",
+  "legacy": {
+    "class": "playerUI.ControlBarUIMC",
+    "export": "symbol4131",
+    "characterId": 4131,
+    "root": {
+      "x": 600.0,
+      "y": 640.0,
+      "anchor": "bottom-center"
+    }
+  },
+  "buttons": [
+    {"id":"cmdRole","characterId":4010,"x":-425.05,"y":-50.0,"shortcut":"C","window":"character"},
+    {"id":"cmdPet","characterId":4006,"x":-377.4,"y":-48.0,"shortcut":"X","window":"pet"},
+    {"id":"cmdRide","characterId":4024,"x":-329.75,"y":-48.25,"shortcut":"N","window":"mount"},
+    {"id":"cmdWing","characterId":4038,"x":-282.1,"y":-48.0,"shortcut":"J","window":"wing"},
+    {"id":"cmdBag","characterId":3997,"x":-234.45,"y":-45.0,"shortcut":"B","window":"inventory"},
+    {"id":"cmdSkill","characterId":4014,"x":-186.6,"y":-47.65,"shortcut":"V","window":"skills"},
+    {"id":"cmdBot","characterId":4028,"x":184.95,"y":-48.4,"shortcut":null,"window":"afk"},
+    {"id":"cmdQuest","characterId":4001,"x":232.9,"y":-48.0,"shortcut":"T","window":"quests"},
+    {"id":"cmdFriend","characterId":4018,"x":280.85,"y":-46.15,"shortcut":"O","window":"friends"},
+    {"id":"cmdTeam","characterId":4022,"x":328.8,"y":-44.0,"shortcut":"P","window":"team"},
+    {"id":"cmdFamily","characterId":4005,"x":376.75,"y":-48.0,"shortcut":"G","window":"guild"},
+    {"id":"cmdBlessGod","characterId":4032,"x":424.8,"y":-44.0,"shortcut":null,"window":null},
+    {"id":"cmdSys","characterId":4036,"x":-458.6,"y":-30.55,"shortcut":null,"window":"system"},
+    {"id":"cmdSoundSwitch","characterId":257,"x":-457.95,"y":-13.55,"type":"movieClip"},
+    {"id":"up","characterId":1821,"x":460.5,"y":-25.5},
+    {"id":"down","characterId":1818,"x":460.5,"y":-25.5}
+  ],
+  "totalIcon": {
+    "characterId": 4130,
+    "x": -18.2,
+    "y": -177.75,
+    "expandedY": -180.0,
+    "collapsedY": 0.0
+  }
+}

@@ -2,6 +2,8 @@
 
 #include "engine/core/GameConfig.h"
 
+#include <windowsx.h>
+
 namespace eudoria {
 namespace {
 constexpr wchar_t kWindowClassName[] = L"EudoriaWindowClass";
@@ -22,7 +24,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
-    // Local-only pixel comparison layer. The actual HUD is reconstructed from the SWF display list.
+    controlBar_.initialize(renderer_.sprites());
     legacyHudReference_.initialize(renderer_.sprites());
 
     MSG message{};
@@ -39,6 +41,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
 
         if (running && !IsIconic(window_)) {
             renderer_.beginFrame();
+            controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             renderer_.endFrame();
         }
@@ -119,6 +122,35 @@ LRESULT Win32Application::handleMessage(
         renderer_.resize(static_cast<std::uint32_t>(LOWORD(lParam)), static_cast<std::uint32_t>(HIWORD(lParam)));
         return 0;
 
+    case WM_MOUSEMOVE:
+        controlBar_.onMouseMove(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height());
+        return 0;
+
+    case WM_LBUTTONDOWN:
+        SetCapture(window);
+        controlBar_.onMouseDown(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height());
+        return 0;
+
+    case WM_LBUTTONUP:
+        if (GetCapture() == window) {
+            ReleaseCapture();
+        }
+        controlBar_.onMouseUp(
+            static_cast<float>(GET_X_LPARAM(lParam)),
+            static_cast<float>(GET_Y_LPARAM(lParam)),
+            renderer_.width(),
+            renderer_.height(),
+            hudWindows_);
+        return 0;
+
     case WM_KEYDOWN:
         if (wParam == VK_F2) {
             legacyHudReference_.toggle();
@@ -130,6 +162,12 @@ LRESULT Win32Application::handleMessage(
         }
         if (wParam == VK_ESCAPE) {
             PostMessageW(window, WM_CLOSE, 0, 0);
+            return 0;
+        }
+        break;
+
+    case WM_KEYUP:
+        if (controlBar_.onKeyUp(static_cast<std::uint32_t>(wParam), hudWindows_)) {
             return 0;
         }
         break;
@@ -164,7 +202,14 @@ void Win32Application::toggleBorderlessFullscreen() {
     } else {
         SetWindowLongPtrW(window_, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
         SetWindowPlacement(window_, &windowPlacement_);
-        SetWindowPos(window_, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        SetWindowPos(
+            window_,
+            nullptr,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
     }
 }
 

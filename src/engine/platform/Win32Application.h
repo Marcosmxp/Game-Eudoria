@@ -3,6 +3,8 @@
 #include <Windows.h>
 
 #include "engine/render/D3D11Renderer.h"
+#include "game/ui/ControlBar.h"
+#include "game/ui/HudWindowManager.h"
 #include "game/ui/LegacyHudReference.h"
 
 namespace eudoria {
@@ -21,6 +23,8 @@ private:
     HWND window_ = nullptr;
     WINDOWPLACEMENT windowPlacement_{sizeof(WINDOWPLACEMENT)};
     D3D11Renderer renderer_;
+    game::ui::HudWindowManager hudWindows_;
+    game::ui::ControlBar controlBar_;
     game::ui::LegacyHudReference legacyHudReference_;
 };
 
