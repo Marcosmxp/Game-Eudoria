@@ -29,13 +29,13 @@ private:
     static constexpr float kReferenceOriginX = 981.0F;
     static constexpr float kReferenceOriginY = 8.5F;
 
-    // Inner map viewport measured from the exported SWF raster relative to
-    // the SmallMap root. This is the content area; the surrounding chrome is
-    // still drawn directly from the payload-derived SmallMap export.
-    static constexpr float kViewportX = -142.0F;
-    static constexpr float kViewportY = 31.0F;
-    static constexpr float kViewportWidth = 128.0F;
-    static constexpr float kViewportHeight = 128.0F;
+    // Exact values recovered from SmallMapUI.as and symbol1825:
+    // mapRootPoint.x = -141, mapRootPoint.y = 34
+    // mapRootPoint.scrollRect = Rectangle(0, 0, 125, 130)
+    static constexpr float kViewportX = -141.0F;
+    static constexpr float kViewportY = 34.0F;
+    static constexpr float kViewportWidth = 125.0F;
+    static constexpr float kViewportHeight = 130.0F;
 
     SpriteTexture skin_;
     SpriteTexture minimap_;

@@ -1,18 +1,40 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "eudoria.ui.smallMap",
   "legacyClass": "playerUI.SmallMapUIMC",
   "legacyExport": "symbol1825",
   "characterId": 1825,
   "root": { "x": 1200, "y": 0, "anchor": "top-right" },
   "rasterBounds": { "originX": 981, "originY": 8.5 },
-  "contentViewport": { "x": -142, "y": 31, "width": 128, "height": 128 },
+  "mapRootPoint": {
+    "x": -141,
+    "y": 34,
+    "scrollRect": { "x": 0, "y": 0, "width": 125, "height": 130 }
+  },
+  "zoom": {
+    "default": 2000,
+    "min": 1000,
+    "max": 3000,
+    "step": 1000
+  },
+  "refreshIntervalMs": 100,
+  "buttons": {
+    "cmdZoomOut": { "x": -41.1, "y": 156.7, "characterId": 1638 },
+    "cmdZoomIn": { "x": -23.1, "y": 156.7, "characterId": 1642 },
+    "cmdMap": { "x": -129.05, "y": 178.7, "characterId": 1651 },
+    "cmdWorldMap": { "x": -101.65, "y": 178.7, "characterId": 1660 }
+  },
+  "textFields": {
+    "txtMapName": { "x": -139.95, "y": 9 },
+    "txtPlayerLocation": { "x": -138.4, "y": 151.65 }
+  },
   "sources": {
-    "chrome": "Crystal Saga.rar -> playerUI.SmallMapUIMC",
+    "chrome": "Crystal Saga.rar -> playerUI.SmallMapUIMC / SmallMapUI.as",
     "minimap": "img.rar -> p<mapId>.jpg",
     "playableMap": "local multi-GB map assets"
   },
   "pending": [
-    "Migrate the exact legacy minimap coordinate/zoom transform from ActionScript before player-position tracking is enabled."
+    "Connect minimap scrolling to local world coordinates when WorldState is implemented.",
+    "Migrate player/monster/NPC/team markers from the original SmallMapUI update routine."
   ]
 }
