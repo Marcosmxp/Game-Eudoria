@@ -24,8 +24,12 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         return 2;
     }
 
+    // All runtime HUD skins below are extracted from the Crystal Saga payload.
+    // Screenshots are comparison references only and are never loaded here.
     playerInfo_.initialize(renderer_.sprites());
+    hudChrome_.initialize(renderer_.sprites());
     controlBar_.initialize(renderer_.sprites());
+    smallMap_.initialize(renderer_.sprites());
     legacyHudReference_.initialize(renderer_.sprites());
 
     MSG message{};
@@ -42,8 +46,10 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
 
         if (running && !IsIconic(window_)) {
             renderer_.beginFrame();
+            hudChrome_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
+            smallMap_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             renderer_.endFrame();
         }

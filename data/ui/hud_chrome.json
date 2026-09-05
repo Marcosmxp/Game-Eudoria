@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "eudoria.ui.hudChrome",
+  "components": [
+    {
+      "id": "gameInfo",
+      "legacyClass": "playerUI.GameInfoUIMC",
+      "legacyExport": "symbol4343",
+      "characterId": 4343,
+      "root": { "x": 0, "y": 570, "anchor": "bottom-left" },
+      "rasterBounds": { "originX": 10, "originY": 348.5 }
+    },
+    {
+      "id": "taskTracer",
+      "legacyClass": "playerUI.TaskTracerUIMC",
+      "legacyExport": "symbol4135",
+      "characterId": 4135,
+      "root": { "x": 960, "y": 230, "anchor": "top-right" },
+      "rasterBounds": { "originX": 2, "originY": 38 }
+    }
+  ],
+  "sourcePolicy": "Crystal Saga.rar SWF/ActionScript is authoritative; screenshots are comparison-only."
+}

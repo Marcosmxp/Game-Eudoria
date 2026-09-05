@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "eudoria.ui.smallMap",
+  "legacyClass": "playerUI.SmallMapUIMC",
+  "legacyExport": "symbol1825",
+  "characterId": 1825,
+  "root": { "x": 1200, "y": 0, "anchor": "top-right" },
+  "rasterBounds": { "originX": 981, "originY": 8.5 },
+  "contentViewport": { "x": -142, "y": 31, "width": 128, "height": 128 },
+  "sources": {
+    "chrome": "Crystal Saga.rar -> playerUI.SmallMapUIMC",
+    "minimap": "img.rar -> p<mapId>.jpg",
+    "playableMap": "local multi-GB map assets"
+  },
+  "pending": [
+    "Migrate the exact legacy minimap coordinate/zoom transform from ActionScript before player-position tracking is enabled."
+  ]
+}
