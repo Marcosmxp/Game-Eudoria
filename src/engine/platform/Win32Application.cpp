@@ -59,6 +59,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
 
         if (running && !IsIconic(window_)) {
             gameInfo_.update();
+            smallMap_.update();
             taskTracer_.update();
 
             renderer_.beginFrame();
@@ -178,6 +179,9 @@ LRESULT Win32Application::handleMessage(
         const float x = static_cast<float>(GET_X_LPARAM(lParam));
         const float y = static_cast<float>(GET_Y_LPARAM(lParam));
         if (gameInfo_.onMouseUp(x, y, renderer_.width(), renderer_.height())) {
+            return 0;
+        }
+        if (smallMap_.onMouseUp(x, y, renderer_.width(), renderer_.height())) {
             return 0;
         }
         if (taskTracer_.onMouseUp(x, y, renderer_.width(), renderer_.height(), hudWindows_)) {
