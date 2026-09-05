@@ -25,7 +25,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
     }
 
     playerInfo_.initialize(renderer_.sprites());
-    hudChrome_.initialize(renderer_.sprites());
+    gameInfo_.initialize(renderer_.sprites());
     controlBar_.initialize(renderer_.sprites());
     smallMap_.initialize(renderer_.sprites());
     taskTracer_.initialize(renderer_.sprites());
@@ -58,10 +58,12 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
         }
 
         if (running && !IsIconic(window_)) {
+            gameInfo_.update();
             taskTracer_.update();
+
             renderer_.beginFrame();
-            hudChrome_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
+            gameInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             smallMap_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             taskTracer_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
@@ -146,54 +148,56 @@ LRESULT Win32Application::handleMessage(
         taskTracer_.onViewportChanged();
         return 0;
 
-    case WM_MOUSEMOVE:
-        taskTracer_.onMouseMove(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height());
-        controlBar_.onMouseMove(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height());
+    case WM_MOUSEMOVE: {
+        const float x = static_cast<float>(GET_X_LPARAM(lParam));
+        const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        gameInfo_.onMouseMove(x, y, renderer_.width(), renderer_.height());
+        taskTracer_.onMouseMove(x, y, renderer_.width(), renderer_.height());
+        controlBar_.onMouseMove(x, y, renderer_.width(), renderer_.height());
         return 0;
+    }
 
-    case WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN: {
         SetCapture(window);
-        taskTracer_.onMouseDown(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height());
-        controlBar_.onMouseDown(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height());
+        const float x = static_cast<float>(GET_X_LPARAM(lParam));
+        const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        if (gameInfo_.onMouseDown(x, y, renderer_.width(), renderer_.height())) {
+            return 0;
+        }
+        if (taskTracer_.onMouseDown(x, y, renderer_.width(), renderer_.height())) {
+            return 0;
+        }
+        controlBar_.onMouseDown(x, y, renderer_.width(), renderer_.height());
         return 0;
+    }
 
-    case WM_LBUTTONUP:
+    case WM_LBUTTONUP: {
         if (GetCapture() == window) {
             ReleaseCapture();
         }
-        taskTracer_.onMouseUp(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height(),
-            hudWindows_);
-        controlBar_.onMouseUp(
-            static_cast<float>(GET_X_LPARAM(lParam)),
-            static_cast<float>(GET_Y_LPARAM(lParam)),
-            renderer_.width(),
-            renderer_.height(),
-            hudWindows_);
+        const float x = static_cast<float>(GET_X_LPARAM(lParam));
+        const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        if (gameInfo_.onMouseUp(x, y, renderer_.width(), renderer_.height())) {
+            return 0;
+        }
+        if (taskTracer_.onMouseUp(x, y, renderer_.width(), renderer_.height(), hudWindows_)) {
+            return 0;
+        }
+        controlBar_.onMouseUp(x, y, renderer_.width(), renderer_.height(), hudWindows_);
         return 0;
+    }
 
     case WM_MOUSEWHEEL: {
         POINT clientPoint{GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         ScreenToClient(window, &clientPoint);
+        if (gameInfo_.onMouseWheel(
+                static_cast<float>(clientPoint.x),
+                static_cast<float>(clientPoint.y),
+                GET_WHEEL_DELTA_WPARAM(wParam),
+                renderer_.width(),
+                renderer_.height())) {
+            return 0;
+        }
         if (taskTracer_.onMouseWheel(
                 static_cast<float>(clientPoint.x),
                 static_cast<float>(clientPoint.y),
@@ -205,7 +209,16 @@ LRESULT Win32Application::handleMessage(
         break;
     }
 
+    case WM_CHAR:
+        if (gameInfo_.onChar(static_cast<wchar_t>(wParam))) {
+            return 0;
+        }
+        break;
+
     case WM_KEYDOWN:
+        if (gameInfo_.onKeyDown(static_cast<std::uint32_t>(wParam))) {
+            return 0;
+        }
         if (wParam == VK_F2) {
             legacyHudReference_.toggle();
             return 0;
@@ -221,6 +234,10 @@ LRESULT Win32Application::handleMessage(
         break;
 
     case WM_KEYUP:
+        // GameInfoUI stops keyboard propagation while the chat input owns focus.
+        if (gameInfo_.inputFocused()) {
+            return 0;
+        }
         if (controlBar_.onKeyUp(static_cast<std::uint32_t>(wParam), hudWindows_)) {
             return 0;
         }

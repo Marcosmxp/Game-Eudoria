@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "gameInfo",
+  "legacyClass": "playerUI.GameInfoUIMC",
+  "legacyExport": "symbol4343",
+  "source": {
+    "behavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/GameInfoUI.as",
+    "class": "Crystal Saga.rar/scripts/playerUI/GameInfoUIMC.as",
+    "skin": "Crystal Saga.rar/sprites/DefineSprite_4343_playerUI.GameInfoUIMC_playerUI.GameInfoUIMC/1.png",
+    "displayList": "Crystal Saga.rar/scripts/_assets/assets.swf"
+  },
+  "root": {
+    "x": 0,
+    "yFormula": "stageHeight - 70",
+    "legacyReference": { "x": 0, "y": 570 },
+    "anchor": "bottom-left"
+  },
+  "symbol4343Placements": {
+    "contentLayer": { "characterId": 4328, "x": 0, "y": -260 },
+    "cmdSendNomal": { "characterId": 4318, "x": 25, "y": -37.6, "scaleX": 1.0416717529 },
+    "cmdSendPrivate": { "characterId": 4318, "x": 75, "y": -37.6, "scaleX": 1.0416717529 },
+    "cmdSendTeam": { "characterId": 4318, "x": 125, "y": -37.45, "scaleX": 1.0416717529 },
+    "cmdSendFamily": { "characterId": 4318, "x": 175, "y": -37.45, "scaleX": 1.0416717529 },
+    "cmdSendWorld": { "characterId": 4318, "x": 225, "y": -37.45, "scaleX": 1.0416717529 },
+    "cmdSendBuy": { "characterId": 4318, "x": 274.95, "y": -37.45, "scaleX": 1.0416717529 },
+    "cmdSendSpeaker": { "characterId": 4318, "x": 324.55, "y": -37.45, "scaleX": 1.0416717529 },
+    "txtInput": { "characterId": 14, "x": 6.65, "y": -22.55, "scaleX": 2.6002197266, "maxChars": 180 },
+    "cmdEnter": { "characterId": 4336, "x": 280.85, "y": -13.65 },
+    "faceBox": { "characterId": 4337, "x": 338.15, "y": -2.6 },
+    "cmdFace": { "characterId": 4340, "x": 294.85, "y": -22.65 },
+    "worldBox": { "characterId": 4342, "x": 2, "y": -338.5 }
+  },
+  "contentLayer": {
+    "characterId": 4328,
+    "txtInfo": { "characterId": 4313, "x": 19, "y": 27 },
+    "scrollInfo": { "characterId": 210, "x": 2, "y": 25.75 },
+    "scopeLayer": { "characterId": 4325, "x": 0, "y": 1.5 },
+    "cmdHide": { "characterId": 4327, "x": 333.95, "y": 6 },
+    "cmdResize": { "characterId": 4327, "x": 317.95, "y": 22, "rotationDegrees": 90 },
+    "defaultInfoHeight": 183,
+    "expandedInfoHeight": 300,
+    "hiddenX": -333.95,
+    "visibleX": 0
+  },
+  "receiveScopeLayer": {
+    "characterId": 4325,
+    "buttons": [
+      { "id": "all", "scope": "all", "x": 24, "y": 10.25 },
+      { "id": "whisper", "scope": "whisper", "x": 74, "y": 10.15 },
+      { "id": "team", "scope": "team", "x": 123.5, "y": 10.15 },
+      { "id": "family", "scope": "family", "x": 173.5, "y": 10.15 },
+      { "id": "world", "scope": "world", "x": 223.5, "y": 10.15 },
+      { "id": "buy", "scope": "trade", "x": 273.45, "y": 10.15 }
+    ]
+  },
+  "behavior": {
+    "defaultSendScope": "nearby",
+    "defaultDisplayScope": "all",
+    "messageLimitPerChannel": 100,
+    "overflowCleanupIntervalMs": 10000,
+    "historyLimit": 20,
+    "inputMaxChars": 180,
+    "privateSyntax": "/player message",
+    "faceCodes": "#00 through #49",
+    "faceColumns": 8,
+    "faceCellSize": 25,
+    "receiveControlsVisibility": "shown while contentLayer is hovered; hidden otherwise; cmdHide remains available while content is collapsed",
+    "resize": "toggle txtInfo/scrollInfo between 183 and 300; recompute contentLayer.y",
+    "contentHide": "toggle contentLayer.x between 0 and -cmdHide.x",
+    "inputEscape": "release input focus",
+    "inputHistory": "Up/Down traverses last 20 messages",
+    "speakerButton": "listener exists in GameInfoUI, but onClickSendScope has no cmdSendSpeaker branch; it does not change sendScope"
+  },
+  "runtimeMilestone": {
+    "part": 3,
+    "implemented": [
+      "native GameInfo root and bottom input chrome",
+      "send scope tabs",
+      "receive scope tabs",
+      "message buffers and filtering",
+      "100 message cap",
+      "mouse-wheel message scrolling",
+      "183/300 content resize",
+      "content hide/show",
+      "keyboard focus and 180 character input",
+      "Enter send",
+      "Escape defocus",
+      "20 entry input history",
+      "whisper /player syntax",
+      "face panel geometry and #00-#49 insertion",
+      "payload-derived button states",
+      "keyboard propagation suppression while chat input is focused"
+    ]
+  }
+}

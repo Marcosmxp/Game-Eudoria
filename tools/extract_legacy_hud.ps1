@@ -8,6 +8,8 @@ param(
 
     [string]$PlayerInfoOutput = "legacy_assets/runtime/ui/player_info",
 
+    [string]$GameInfoOutput = "legacy_assets/runtime/ui/game_info",
+
     [string]$SevenZip = "7z"
 )
 
@@ -25,11 +27,13 @@ $root = (Resolve-Path ".").Path
 $outputPath = Join-Path $root $Output
 $runtimeOutputPath = Join-Path $root $RuntimeOutput
 $playerInfoOutputPath = Join-Path $root $PlayerInfoOutput
+$gameInfoOutputPath = Join-Path $root $GameInfoOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
 
 New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $runtimeOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $playerInfoOutputPath | Out-Null
+New-Item -ItemType Directory -Force -Path $gameInfoOutputPath | Out-Null
 New-Item -ItemType Directory -Force -Path $tempPath | Out-Null
 
 function Extract-LegacyEntry {
@@ -121,6 +125,12 @@ $buttonStates = [ordered]@{
     "hittest" = "4_hittest.png"
 }
 
+$gameInfoButtons = [ordered]@{
+    "content_toggle" = 4327
+    "enter"          = 4336
+    "face"           = 4340
+}
+
 try {
     foreach ($entry in $references.GetEnumerator()) {
         Extract-LegacyEntry `
@@ -132,6 +142,22 @@ try {
         foreach ($state in $buttonStates.GetEnumerator()) {
             $entry = "buttons/DefineButton2_$($button.Value)/$($state.Value)"
             $destination = Join-Path $runtimeOutputPath "$($button.Key)/$($state.Key).png"
+            Extract-LegacyEntry -Entry $entry -Destination $destination
+        }
+    }
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_4318_somcUI_fla.ScopeButton_423_somcUI_fla.ScopeButton_423/1.png" `
+        -Destination (Join-Path $gameInfoOutputPath "scope_button/normal.png")
+
+    Extract-LegacyEntry `
+        -Entry "sprites/DefineSprite_4318_somcUI_fla.ScopeButton_423_somcUI_fla.ScopeButton_423/2.png" `
+        -Destination (Join-Path $gameInfoOutputPath "scope_button/active.png")
+
+    foreach ($button in $gameInfoButtons.GetEnumerator()) {
+        foreach ($state in $buttonStates.GetEnumerator()) {
+            $entry = "buttons/DefineButton2_$($button.Value)/$($state.Value)"
+            $destination = Join-Path $gameInfoOutputPath "$($button.Key)/$($state.Key).png"
             Extract-LegacyEntry -Entry $entry -Destination $destination
         }
     }
@@ -151,3 +177,4 @@ finally {
 Write-Host "Legacy HUD references extracted to $outputPath"
 Write-Host "ControlBar button states extracted to $runtimeOutputPath"
 Write-Host "PlayerInfo HP/MP frames extracted to $playerInfoOutputPath"
+Write-Host "GameInfo runtime assets extracted to $gameInfoOutputPath"

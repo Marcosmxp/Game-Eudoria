@@ -13,7 +13,7 @@ add_executable(Eudoria WIN32
     src/engine/render/SpriteRenderer.cpp
     src/engine/render/TextRasterizer.cpp
     src/game/ui/ControlBar.cpp
-    src/game/ui/HudChrome.cpp
+    src/game/ui/GameInfoHud.cpp
     src/game/ui/LegacyHudReference.cpp
     src/game/ui/PlayerInfoHud.cpp
     src/game/ui/SmallMapHud.cpp
