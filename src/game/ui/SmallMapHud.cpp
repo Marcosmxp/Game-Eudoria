@@ -52,15 +52,34 @@ void SmallMapHud::render(
     const float scale = viewport.scale();
     const auto root = viewport.mapRoot(kRoot, kAnchor);
 
+    // Do not draw the complete symbol1825 reference here. Its first-frame
+    // raster contains SmallMap.totalIcon (1815), which is an independent,
+    // expandable feature panel in the original ActionScript. Drawing the full
+    // reference forced dozens of icons to spill across the game screen.
+    //
+    // This region is derived from the SWF display-list geometry and contains
+    // only the native minimap frame/chrome. F2 still renders the complete
+    // reference for comparison while the remaining SmallMap children are
+    // migrated independently.
     if (skin_.valid()) {
-        renderer.draw(
+        renderer.drawRegion(
             skin_,
-            root.x - (kReferenceOriginX * scale),
-            root.y - (kReferenceOriginY * scale),
-            static_cast<float>(skin_.width) * scale,
-            static_cast<float>(skin_.height) * scale);
+            {
+                kChromeSourceX,
+                kChromeSourceY,
+                kChromeWidth,
+                kChromeHeight,
+            },
+            root.x + (kChromeLocalX * scale),
+            root.y + (kChromeLocalY * scale),
+            kChromeWidth * scale,
+            kChromeHeight * scale);
     }
 
+    // mapRootPoint.scrollRect in SmallMapUI.as is exactly 125 x 130 at
+    // (-141, 34). The current pre-world-state minimap is still fitted into
+    // that viewport; world-coordinate scrolling is connected later when the
+    // local map state owns mapWidth/mapHeight/player rootPX/rootPY.
     if (minimap_.valid()) {
         renderer.draw(
             minimap_,
