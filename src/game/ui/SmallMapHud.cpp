@@ -52,16 +52,11 @@ void SmallMapHud::render(
     const float scale = viewport.scale();
     const auto root = viewport.mapRoot(kRoot, kAnchor);
 
-    // Do not draw the complete symbol1825 reference here. Its first-frame
-    // raster contains SmallMap.totalIcon (1815), which is an independent,
-    // expandable feature panel in the original ActionScript. Drawing the full
-    // reference forced dozens of icons to spill across the game screen.
-    //
-    // This region is derived from the SWF display-list geometry and contains
-    // only the native minimap frame/chrome. F2 still renders the complete
-    // reference for comparison while the remaining SmallMap children are
-    // migrated independently.
     if (skin_.valid()) {
+        // Restore the direct SmallMap chrome/buttons as their own non-overlapping
+        // payload region. This includes the minimap frame, vertical utility
+        // buttons, map/world-map row, Claim/online-bonus area and collapse arrow,
+        // but excludes character1815 (totalIcon).
         renderer.drawRegion(
             skin_,
             {
@@ -87,6 +82,26 @@ void SmallMapHud::render(
             root.y + (kViewportY * scale),
             kViewportWidth * scale,
             kViewportHeight * scale);
+    }
+
+    if (skin_.valid()) {
+        // SmallMapUI starts with totalIcon expanded (mg = true). The legacy
+        // sprite is intentionally restored independently instead of returning
+        // to the old full-symbol composite. Its raster ends immediately before
+        // the right-side chrome region, so the two components can be rendered
+        // at their exact payload positions without duplicated pixels.
+        renderer.drawRegion(
+            skin_,
+            {
+                kFeatureSourceX,
+                kFeatureSourceY,
+                kFeatureWidth,
+                kFeatureHeight,
+            },
+            root.x + (kFeatureLocalX * scale),
+            root.y + (kFeatureLocalY * scale),
+            kFeatureWidth * scale,
+            kFeatureHeight * scale);
     }
 }
 
