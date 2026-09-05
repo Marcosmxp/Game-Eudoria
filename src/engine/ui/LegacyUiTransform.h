@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
 
 namespace eudoria::ui {
@@ -26,23 +25,25 @@ struct LegacyViewport final {
     float width = kReferenceWidth;
     float height = kReferenceHeight;
 
-    [[nodiscard]] float scale() const noexcept {
-        if (width <= 0.0F || height <= 0.0F) {
-            return 1.0F;
-        }
-        return std::min(width / kReferenceWidth, height / kReferenceHeight);
+    // Crystal Saga's SomcGame.initStage() explicitly configures
+    // StageScaleMode.NO_SCALE + StageAlign.TOP_LEFT. The Flash HUD therefore
+    // stays at native pixel size when the stage/window grows; only edge-anchored
+    // roots move with stageWidth/stageHeight. Scaling the HUD here was the cause
+    // of blurred icons in fullscreen and incorrect spacing.
+    [[nodiscard]] constexpr float scale() const noexcept {
+        return 1.0F;
     }
 
     [[nodiscard]] Point mapRoot(const Point legacy, const Anchor anchor) const noexcept {
-        const float s = scale();
+        constexpr float s = 1.0F;
 
         switch (anchor) {
         case Anchor::TopLeft:
-            return {legacy.x * s, legacy.y * s};
+            return {legacy.x, legacy.y};
         case Anchor::TopRight:
-            return {width - ((kReferenceWidth - legacy.x) * s), legacy.y * s};
+            return {width - ((kReferenceWidth - legacy.x) * s), legacy.y};
         case Anchor::BottomLeft:
-            return {legacy.x * s, height - ((kReferenceHeight - legacy.y) * s)};
+            return {legacy.x, height - ((kReferenceHeight - legacy.y) * s)};
         case Anchor::BottomCenter:
             return {
                 (width * 0.5F) + ((legacy.x - (kReferenceWidth * 0.5F)) * s),
