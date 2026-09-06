@@ -75,6 +75,18 @@ $buttonStates = [ordered]@{
 }
 
 try {
+    # Keep the complete FFDec raster as a comparison reference only. Runtime
+    # continues to reconstruct PlayerFullInfoUIMC from individual payload
+    # children; this file is not used as the live Character skin.
+    try {
+        Extract-Entry `
+            -Entry "sprites/DefineSprite_1998_playerUI.PlayerFullInfoUIMC_playerUI.PlayerFullInfoUIMC/1.png" `
+            -Destination (Join-Path $outputPath "reference.png")
+    }
+    catch {
+        Write-Host "[Role Character] Full symbol1998 comparison raster was not found under the expected FFDec linkage path."
+    }
+
     # PlayerFullInfoUIMC symbol1998 core display-list assets.
     Extract-Entry -Entry "shapes/1884.png" -Destination (Join-Path $outputPath "equipment_panel.png")
 
@@ -113,3 +125,19 @@ finally {
 }
 
 Write-Host "Role Character display-list assets extracted to $outputPath"
+
+# Generate an exact machine-readable snapshot of symbol1998 whenever Python is
+# available. It is diagnostic/source-of-truth data for the next reconstruction
+# passes and never blocks the build if Python is not installed.
+$dumpTool = Join-Path $root "tools\dump_role_character_payload.ps1"
+if (Test-Path $dumpTool) {
+    try {
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dumpTool -Archive $Archive -SevenZip $SevenZip
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[Role payload] Exact symbol1998 dump failed; continuing because runtime assets were extracted successfully."
+        }
+    }
+    catch {
+        Write-Host "[Role payload] Exact symbol1998 dump skipped: $($_.Exception.Message)"
+    }
+}
