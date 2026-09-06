@@ -31,7 +31,7 @@ class TaskTracerHud final {
 public:
     bool initialize(
         SpriteRenderer& renderer,
-        const std::filesystem::path& referenceRoot = "legacy_assets/reference/ui");
+        const std::filesystem::path& runtimeRoot = "legacy_assets/runtime/ui/task_tracer");
 
     void update();
     void render(SpriteRenderer& renderer, std::uint32_t viewportWidth, std::uint32_t viewportHeight) const;
@@ -83,6 +83,10 @@ private:
         CanReceiveTaskTab,
         ToggleTask,
         ViewTask,
+        ScrollUp,
+        ScrollDown,
+        ScrollTrack,
+        ScrollThumb,
     };
 
     struct Rect final {
@@ -107,6 +111,12 @@ private:
         TextTextureResult view;
     };
 
+    struct ThumbGeometry final {
+        float y = 0.0F;
+        float height = 0.0F;
+        bool visible = false;
+    };
+
     [[nodiscard]] eudoria::ui::Point mappedRoot(
         std::uint32_t viewportWidth,
         std::uint32_t viewportHeight) const noexcept;
@@ -116,6 +126,10 @@ private:
     [[nodiscard]] Rect haveTaskTabRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
     [[nodiscard]] Rect canReceiveTaskTabRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
     [[nodiscard]] Rect contentRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
+    [[nodiscard]] Rect scrollUpRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
+    [[nodiscard]] Rect scrollDownRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
+    [[nodiscard]] Rect scrollTrackRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
+    [[nodiscard]] Rect scrollThumbRect(std::uint32_t viewportWidth, std::uint32_t viewportHeight) const noexcept;
 
     [[nodiscard]] Rect taskNameRect(
         const TaskVisual& task,
@@ -127,12 +141,20 @@ private:
         std::uint32_t viewportWidth,
         std::uint32_t viewportHeight) const noexcept;
 
+    [[nodiscard]] float scrollContentHeight() const noexcept;
+    [[nodiscard]] bool scrollBarVisible() const noexcept;
+    [[nodiscard]] ThumbGeometry thumbGeometry() const noexcept;
+
     void markDirty() noexcept { dirty_ = true; }
     void refreshVisuals();
     void rebuildTrackedTaskVisuals();
     void rebuildAvailableTaskVisual();
     void clampScroll() noexcept;
     void toggleTask(std::int32_t taskId);
+    void pageScroll(float direction) noexcept;
+
+    void renderChrome(SpriteRenderer& renderer, const eudoria::ui::Point& root, float scale) const;
+    void renderScrollBar(SpriteRenderer& renderer, const eudoria::ui::Point& root, float scale) const;
 
     static void drawClipped(
         SpriteRenderer& renderer,
@@ -149,47 +171,88 @@ private:
     static constexpr eudoria::ui::Point kDefaultRoot{960.0F, 230.0F};
     static constexpr eudoria::ui::Anchor kAnchor = eudoria::ui::Anchor::TopRight;
 
-    static constexpr float kReferenceOriginX = 2.0F;
-    static constexpr float kReferenceOriginY = 38.0F;
-    static constexpr float kPayloadWidth = 242.0F;
-    static constexpr float kPayloadHeight = 219.0F;
+    // symbol4135 titleBox is character304 placed at (120,-18), scaleX 4.999313,
+    // scaleY 0.750031. character303 bounds are exactly -24..24 in both axes,
+    // producing the 240 x 36 legacy title chrome below.
+    static constexpr float kTitleX = 0.0F;
+    static constexpr float kTitleY = -36.0F;
     static constexpr float kTitleWidth = 240.0F;
-    static constexpr float kTitleHeight = 38.0F;
-    static constexpr float kCollapseWidth = 31.0F;
+    static constexpr float kTitleHeight = 36.0F;
 
-    // Extracted directly from symbol4135 / TaskTracerUIMC.
-    static constexpr float kPointTaskX = 0.0F;
-    static constexpr float kPointTaskY = 0.0F;
-    static constexpr float kScrollTaskX = 224.0F;
-    static constexpr float kContentWidth = 224.0F;
-    static constexpr float kContentHeight = 180.0F;
+    // DefineEditText 4133: placement (42,-33), bounds (-2..161,-2..15.65).
+    static constexpr float kTitleTextX = 40.0F;
+    static constexpr float kTitleTextY = -35.0F;
+    static constexpr float kTitleTextWidth = 163.0F;
+    static constexpr float kTitleTextHeight = 18.0F;
+
+    // DefineEditText 4134 collapse glyph: placement (6,-23), bounds
+    // (-2..14,-2..15.65). TaskTracerUI toggles the payload glyph ━ / ╋.
+    static constexpr float kCollapseTextX = 4.0F;
+    static constexpr float kCollapseTextY = -25.0F;
+    static constexpr float kCollapseTextWidth = 16.0F;
+    static constexpr float kCollapseTextHeight = 18.0F;
+
+    // TableButton character436 instances recovered from symbol4135.
     static constexpr float kHaveTaskTabX = 32.1F;
     static constexpr float kCanReceiveTaskTabX = 122.0F;
     static constexpr float kTabY = -19.0F;
-    static constexpr float kTabWidth = 88.0F;
-    static constexpr float kTabHeight = 20.0F;
+    static constexpr float kTabScaleX = 1.8317566F;
+    static constexpr float kTabScaleY = 1.0315247F;
+    static constexpr float kTabHitWidth = 93.0F;
+    static constexpr float kTabHitHeight = 20.0F;
 
-    // Extracted directly from symbol5665 / TaskTracerBoxUIMC and DefineEditText bounds.
-    static constexpr float kTaskNameX = 5.0F;
-    static constexpr float kTaskNameY = 5.0F;
+    // Task content / UIScrollBar geometry. UIScrollBar has WIDTH=15, arrows=14,
+    // and scrollTask is scaled to a final 180 px height in symbol4135.
+    static constexpr float kPointTaskX = 0.0F;
+    static constexpr float kPointTaskY = 0.0F;
+    static constexpr float kContentWidth = 224.0F;
+    static constexpr float kContentHeight = 180.0F;
+    static constexpr float kScrollX = 224.0F;
+    static constexpr float kScrollY = 0.0F;
+    static constexpr float kScrollWidth = 15.0F;
+    static constexpr float kScrollHeight = 180.0F;
+    static constexpr float kScrollArrowHeight = 14.0F;
+    static constexpr float kScrollTrackY = 14.0F;
+    static constexpr float kScrollTrackHeight = 152.0F;
+    static constexpr float kScrollMinThumbHeight = 13.0F;
+
+    // TaskTracerBoxUIMC symbol5665 uses a 1px separator at x=2.5, then three
+    // text fields. The -2 bounds on DefineEditText are included here so text is
+    // placed at the same raster origin as Flash, not merely at instance x/y.
+    static constexpr float kTaskSeparatorX = 2.5F;
+    static constexpr float kTaskSeparatorY = -0.5F;
+    static constexpr float kTaskSeparatorWidth = 223.0F;
+    static constexpr float kTaskSeparatorHeight = 1.0F;
+    static constexpr float kTaskNameX = 3.0F;
+    static constexpr float kTaskNameY = 3.0F;
     static constexpr float kTaskNameWidth = 168.0F;
     static constexpr float kTaskNameHeight = 29.0F;
-    static constexpr float kTaskConditionX = 5.0F;
-    static constexpr float kTaskConditionY = 33.7F;
-    static constexpr float kTaskConditionWidth = 220.0F;
-    static constexpr float kTaskConditionMaxHeight = 120.0F;
-    static constexpr float kTaskViewX = 166.0F;
-    static constexpr float kTaskViewY = 5.0F;
-    static constexpr float kTaskViewWidth = 59.0F;
-    static constexpr float kTaskViewHeight = 27.0F;
+    static constexpr float kTaskConditionX = 3.0F;
+    static constexpr float kTaskConditionY = 31.7F;
+    static constexpr float kTaskConditionWidth = 222.0F;
+    static constexpr float kTaskConditionMaxHeight = 512.0F;
+    static constexpr float kTaskViewX = 164.0F;
+    static constexpr float kTaskViewY = 3.0F;
+    static constexpr float kTaskViewWidth = 61.0F;
+    static constexpr float kTaskViewHeight = 29.0F;
 
     SpriteRenderer* renderer_ = nullptr;
-    SpriteTexture skin_;
-    SpriteTexture taskBoxSkin_;
-    TextTextureResult haveTaskLabelNormal_;
-    TextTextureResult haveTaskLabelActive_;
-    TextTextureResult canReceiveLabelNormal_;
-    TextTextureResult canReceiveLabelActive_;
+    SpriteTexture titleBox_;
+    SpriteTexture tabNormal_;
+    SpriteTexture tabActive_;
+    SpriteTexture taskSeparator_;
+    SpriteTexture scrollTrack_;
+    SpriteTexture scrollUp_;
+    SpriteTexture scrollDown_;
+    SpriteTexture scrollThumb_;
+    SpriteTexture scrollThumbIcon_;
+
+    TextTextureResult titleLabel_;
+    TextTextureResult collapseExpandedLabel_;
+    TextTextureResult collapseCollapsedLabel_;
+    TextTextureResult haveTaskLabel_;
+    TextTextureResult canReceiveLabel_;
+
     std::vector<TrackedTask> trackedTasks_;
     std::vector<AvailableTask> availableTasks_;
     std::vector<TaskVisual> taskVisuals_;
@@ -203,9 +266,11 @@ private:
     std::int32_t pressedTaskId_ = 0;
     float scrollPosition_ = 0.0F;
     float contentHeight_ = 0.0F;
+    float scrollThumbGrabOffset_ = 0.0F;
     std::chrono::steady_clock::time_point lastRefresh_{};
     bool expanded_ = true;
     bool dragging_ = false;
+    bool draggingScrollThumb_ = false;
     bool dirty_ = true;
 };
 
