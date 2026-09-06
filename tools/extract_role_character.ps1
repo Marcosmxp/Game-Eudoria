@@ -43,6 +43,24 @@ function Extract-Entry {
     Copy-Item $source $Destination -Force
 }
 
+function Resolve-ArchiveEntry {
+    param([Parameter(Mandatory = $true)][string]$Pattern)
+
+    $listing = & $SevenZip l -slt $Archive
+    if ($LASTEXITCODE -ne 0) {
+        return $null
+    }
+    foreach ($line in $listing) {
+        if ($line -like "Path = *") {
+            $entry = $line.Substring(7).Replace('\', '/')
+            if ($entry -match $Pattern) {
+                return $entry
+            }
+        }
+    }
+    return $null
+}
+
 function Extract-Frames {
     param(
         [Parameter(Mandatory = $true)][int]$CharacterId,
@@ -75,24 +93,17 @@ $buttonStates = [ordered]@{
 }
 
 try {
-    # Keep the complete FFDec raster as a comparison reference only. Runtime
-    # continues to reconstruct PlayerFullInfoUIMC from individual payload
-    # children; this file is not used as the live Character skin.
-    try {
-        Extract-Entry `
-            -Entry "sprites/DefineSprite_1998_playerUI.PlayerFullInfoUIMC_playerUI.PlayerFullInfoUIMC/1.png" `
-            -Destination (Join-Path $outputPath "reference.png")
+    # The Character window now uses the complete symbol1998 first-frame raster
+    # as its visual baseline. Resolve the linkage-suffixed FFDec folder from the
+    # actual archive instead of assuming one exact export path.
+    $referenceEntry = Resolve-ArchiveEntry -Pattern '^sprites/DefineSprite_1998(?:_[^/]*)?/1\.png$'
+    if (-not $referenceEntry) {
+        throw "PlayerFullInfoUIMC symbol1998 reference raster was not found in Crystal Saga.rar"
     }
-    catch {
-        Write-Host "[Role Character] Full symbol1998 comparison raster was not found under the expected FFDec linkage path."
-    }
+    Extract-Entry -Entry $referenceEntry -Destination (Join-Path $outputPath "reference.png")
 
-    # PlayerFullInfoUIMC symbol1998 core display-list assets.
+    # Keep the individual assets as diagnostics/future interactive decomposition.
     Extract-Entry -Entry "shapes/1884.png" -Destination (Join-Path $outputPath "equipment_panel.png")
-
-    # Some FFDec export folders include the AS3 linkage name after the character
-    # id. Use the exact paths present in Crystal Saga.rar rather than assuming
-    # every sprite folder is named only DefineSprite_<id>.
     Extract-Entry `
         -Entry "sprites/DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC/1.png" `
         -Destination (Join-Path $outputPath "equipment_slot.png")
@@ -102,9 +113,6 @@ try {
         -Entry "sprites/DefineSprite_89_MainButton_MainButton/1.png" `
         -Destination (Join-Path $outputPath "main_button.png")
 
-    # Both expBar and the secondary meter are symbol361 and are initialized at
-    # frame 100 by the original PlayerFullInfo controller. Keep all 100 frames
-    # now so later XP/progression binding does not require another extractor.
     Extract-Frames -CharacterId 361 -FrameCount 100 -Destination (Join-Path $outputPath "progress")
 
     $attributeButtons = [ordered]@{
@@ -124,20 +132,17 @@ finally {
     Remove-Item $tempPath -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host "Role Character display-list assets extracted to $outputPath"
+Write-Host "Role Character payload reference and diagnostic assets extracted to $outputPath"
 
-# Generate an exact machine-readable snapshot of symbol1998 whenever Python is
-# available. It is diagnostic/source-of-truth data for the next reconstruction
-# passes and never blocks the build if Python is not installed.
 $dumpTool = Join-Path $root "tools\dump_role_character_payload.ps1"
 if (Test-Path $dumpTool) {
     try {
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dumpTool -Archive $Archive -SevenZip $SevenZip
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "[Role payload] Exact symbol1998 dump failed; continuing because runtime assets were extracted successfully."
+            throw "Exact symbol1998 payload/bounds extraction failed"
         }
     }
     catch {
-        Write-Host "[Role payload] Exact symbol1998 dump skipped: $($_.Exception.Message)"
+        throw "Role Character payload preparation failed: $($_.Exception.Message)"
     }
 }
