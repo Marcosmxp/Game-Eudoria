@@ -19,6 +19,7 @@ TAG_DEFINE_TEXT = {11, 33}
 TAG_DEFINE_EDIT_TEXT = 37
 TAG_DEFINE_MORPH_SHAPE = {46, 84}
 TAG_EXPORT_ASSETS = 56
+TAG_SYMBOL_CLASS = 76
 TAG_PLACE_OBJECT2 = 26
 TAG_PLACE_OBJECT3 = 70
 TAG_REMOVE_OBJECT2 = 28
@@ -82,6 +83,7 @@ class Swf:
         self.tags = list(self._iter_tags(offset, len(self.data)))
         self.definitions: dict[int, Tag] = {}
         self.exports: dict[str, int] = {}
+        self.symbol_classes: dict[str, int] = {}
         self._index()
 
     @staticmethod
@@ -184,6 +186,17 @@ class Swf:
                     offset += 2
                     name, offset = self._read_cstring(self.data, offset, tag.end)
                     self.exports[name] = character_id
+            elif tag.code == TAG_SYMBOL_CLASS:
+                count = struct.unpack_from("<H", self.data, tag.start)[0]
+                offset = tag.start + 2
+                for _ in range(count):
+                    character_id = struct.unpack_from("<H", self.data, offset)[0]
+                    offset += 2
+                    name, offset = self._read_cstring(self.data, offset, tag.end)
+                    # Character id 0 is the document class; it is not a display
+                    # object definition and therefore cannot be used as a UI root.
+                    if character_id:
+                        self.symbol_classes[name] = character_id
 
     def _parse_place2(self, tag: Tag) -> dict:
         offset = tag.start
@@ -280,8 +293,26 @@ class Swf:
             46: "morphShape", 84: "morphShape2",
         }.get(definition.code, f"tag{definition.code}")
 
+    def resolve_symbol(self, symbol_name: str) -> int:
+        if symbol_name in self.exports:
+            return self.exports[symbol_name]
+        if symbol_name in self.symbol_classes:
+            return self.symbol_classes[symbol_name]
+
+        # FFDec names unexported display objects as symbol<characterId>. Those
+        # synthetic names are extremely useful in this reconstruction even when
+        # the SWF has no ExportAssets/SymbolClass record for the object.
+        if symbol_name.startswith("symbol"):
+            suffix = symbol_name[6:]
+            if suffix.isdigit():
+                character_id = int(suffix)
+                if character_id in self.definitions:
+                    return character_id
+
+        raise KeyError(f"SWF export/symbol not found: {symbol_name}")
+
     def sprite_payload(self, export_name: str) -> dict:
-        sprite_id = self.exports[export_name]
+        sprite_id = self.resolve_symbol(export_name)
         children = self.first_frame(sprite_id)
         for child in children:
             cid = child.get("characterId")
@@ -298,7 +329,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Extract Crystal Saga legacy UI display-list payloads from assets.swf")
     parser.add_argument("swf", type=Path)
     parser.add_argument("--output", type=Path, default=Path("generated/ui/hud.legacy.json"))
-    parser.add_argument("--exports", nargs="*", help="Override exported symbols. Defaults to the confirmed main HUD.")
+    parser.add_argument("--exports", nargs="*", help="Override exported/synthetic symbols. Defaults to the confirmed main HUD.")
     args = parser.parse_args()
 
     swf = Swf(args.swf)
@@ -309,8 +340,6 @@ def main() -> int:
 
     components = []
     for component_id, root in roots.items():
-        if root["export"] not in swf.exports:
-            raise KeyError(f"SWF export not found: {root['export']}")
         payload = swf.sprite_payload(root["export"])
         payload.update({
             "id": component_id,
