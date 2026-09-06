@@ -46,9 +46,6 @@ function Invoke-PythonScript {
     return $LASTEXITCODE
 }
 
-# Resolve exact FFDec paths from one archive listing instead of relying on 7-Zip
-# wildcard extraction. Many exported symbols carry linkage names in the folder,
-# e.g. DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC.
 $archiveEntries = @()
 $listing = & $SevenZip l -slt $Archive
 if ($LASTEXITCODE -ne 0) {
@@ -72,22 +69,14 @@ function Resolve-ArchiveEntry {
 
     $escapedId = [regex]::Escape([string]$CharacterId)
     switch ($Type) {
-        { $_ -like "shape*" } {
-            $pattern = "^shapes/$escapedId\.png$"
-        }
+        { $_ -like "shape*" } { $pattern = "^shapes/$escapedId\.png$" }
         "sprite" {
             $escapedFrame = [regex]::Escape($Frame)
             $pattern = "^sprites/DefineSprite_${escapedId}(?:_[^/]*)?/${escapedFrame}\.png$"
         }
-        "button" {
-            $pattern = "^buttons/DefineButton_${escapedId}(?:_[^/]*)?/1_up\.png$"
-        }
-        "button2" {
-            $pattern = "^buttons/DefineButton2_${escapedId}(?:_[^/]*)?/1_up\.png$"
-        }
-        default {
-            return $null
-        }
+        "button" { $pattern = "^buttons/DefineButton_${escapedId}(?:_[^/]*)?/1_up\.png$" }
+        "button2" { $pattern = "^buttons/DefineButton2_${escapedId}(?:_[^/]*)?/1_up\.png$" }
+        default { return $null }
     }
 
     return $archiveEntries | Where-Object { $_ -match $pattern } | Select-Object -First 1
@@ -100,14 +89,10 @@ function Extract-ResolvedEntry {
     )
 
     & $SevenZip x $Archive $Entry "-o$tempPath" -y | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        return $false
-    }
+    if ($LASTEXITCODE -ne 0) { return $false }
 
     $source = Join-Path $tempPath ($Entry -replace '/', [IO.Path]::DirectorySeparatorChar)
-    if (-not (Test-Path $source)) {
-        return $false
-    }
+    if (-not (Test-Path $source)) { return $false }
 
     New-Item -ItemType Directory -Force -Path (Split-Path $Destination -Parent) | Out-Null
     Copy-Item $source $Destination -Force
@@ -134,30 +119,21 @@ function Copy-AutoVisual {
         Write-Host "[Role payload] Failed to extract $entry for $($Row.name)."
         return $false
     }
-
     return $true
 }
 
 try {
     & $SevenZip x $Archive "scripts/_assets/assets.swf" "-o$tempPath" -y | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not extract assets.swf from Crystal Saga.rar"
-    }
+    if ($LASTEXITCODE -ne 0) { throw "Could not extract assets.swf from Crystal Saga.rar" }
 
     $swf = Join-Path $tempPath "scripts\_assets\assets.swf"
-    if (-not (Test-Path $swf)) {
-        throw "Extracted assets.swf was not found: $swf"
-    }
+    if (-not (Test-Path $swf)) { throw "Extracted assets.swf was not found: $swf" }
 
     $tool = Join-Path $root "tools\swf_ui_payload\swf_ui_payload.py"
-    if (-not (Test-Path $tool)) {
-        throw "SWF payload parser was not found: $tool"
-    }
+    if (-not (Test-Path $tool)) { throw "SWF payload parser was not found: $tool" }
 
     $exitCode = Invoke-PythonScript -Arguments @($tool, $swf, "--output", $outputPath, "--exports", "symbol1998")
-    if ($exitCode -ne 0) {
-        throw "SWF payload parser failed for symbol1998"
-    }
+    if ($exitCode -ne 0) { throw "SWF payload parser failed for symbol1998" }
 
     $payload = Get-Content $outputPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $component = $payload.components | Select-Object -First 1
@@ -183,11 +159,13 @@ try {
 
     $manifestTool = Join-Path $root "tools\swf_ui_payload\role_character_manifest.py"
     $manifest = Join-Path $outputDirectory "auto_manifest.tsv"
+    $rootBounds = Join-Path $outputDirectory "reference_bounds.tsv"
     if (Test-Path $manifestTool) {
         $exitCode = Invoke-PythonScript -Arguments @(
             $manifestTool,
             $swf,
             "--output", $manifest,
+            "--root-bounds-output", $rootBounds,
             "--exclude-ids", "1884", "276", "304", "263", "361", "89", "908", "1914", "1917"
         )
         if ($exitCode -eq 0 -and (Test-Path $manifest)) {
@@ -199,23 +177,18 @@ try {
             $failed = @()
             foreach ($row in $rows) {
                 $destination = Join-Path $autoDirectory ([string]$row.asset)
-                if (Copy-AutoVisual -Row $row -Destination $destination) {
-                    $copied++
-                }
-                else {
-                    $failed += "$($row.depth):$($row.name):$($row.characterId):$($row.characterType)"
-                }
+                if (Copy-AutoVisual -Row $row -Destination $destination) { $copied++ }
+                else { $failed += "$($row.depth):$($row.name):$($row.characterId):$($row.characterType)" }
             }
 
             $failedPath = Join-Path $outputDirectory "auto_missing.txt"
-            if ($failed.Count -gt 0) {
-                $failed | Set-Content -Path $failedPath -Encoding UTF8
-            }
-            else {
-                Remove-Item $failedPath -Force -ErrorAction SilentlyContinue
-            }
+            if ($failed.Count -gt 0) { $failed | Set-Content -Path $failedPath -Encoding UTF8 }
+            else { Remove-Item $failedPath -Force -ErrorAction SilentlyContinue }
 
             Write-Host "Role Character auto payload layer extracted: $copied / $($rows.Count) visuals."
+            if (Test-Path $rootBounds) {
+                Write-Host "Role Character reference bounds written to $rootBounds"
+            }
             if ($failed.Count -gt 0) {
                 Write-Host "[Role payload] Missing auto visuals recorded in $failedPath"
             }
