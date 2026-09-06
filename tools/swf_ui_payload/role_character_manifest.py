@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+import struct
 from dataclasses import dataclass
 from pathlib import Path
 
 from swf_ui_payload import (
     Swf,
+    TAG_DEFINE_BUTTON,
+    TAG_DEFINE_BUTTON2,
     TAG_DEFINE_EDIT_TEXT,
     TAG_DEFINE_MORPH_SHAPE,
     TAG_DEFINE_SHAPE,
@@ -76,6 +79,59 @@ class BoundsResolver:
         self.cache: dict[int, Bounds | None] = {}
         self.active: set[int] = set()
 
+    def _button_up_bounds(self, character_id: int) -> Bounds | None:
+        tag = self.swf.definitions[character_id]
+        data = self.swf.data
+        result: Bounds | None = None
+
+        if tag.code == TAG_DEFINE_BUTTON:
+            offset = tag.start + 2
+            while offset < tag.end:
+                flags = data[offset]
+                offset += 1
+                if flags == 0:
+                    break
+                child_id = struct.unpack_from("<H", data, offset)[0]
+                offset += 2
+                offset += 2  # place depth
+                matrix, offset = self.swf._read_matrix(offset)
+                if flags & 0x01:  # StateUp
+                    child_bounds = self.resolve(child_id)
+                    if child_bounds is not None:
+                        result = union(result, transform_bounds(child_bounds, matrix))
+            return result
+
+        if tag.code == TAG_DEFINE_BUTTON2:
+            offset = tag.start + 2
+            offset += 1  # TrackAsMenu / reserved flags
+            offset += 2  # ActionOffset
+            while offset < tag.end:
+                flags = data[offset]
+                offset += 1
+                if flags == 0:
+                    break
+                child_id = struct.unpack_from("<H", data, offset)[0]
+                offset += 2
+                offset += 2  # place depth
+                matrix, offset = self.swf._read_matrix(offset)
+                offset = self.swf._skip_cxform_alpha(offset)
+
+                if flags & 0x01:  # StateUp
+                    child_bounds = self.resolve(child_id)
+                    if child_bounds is not None:
+                        result = union(result, transform_bounds(child_bounds, matrix))
+
+                # Button records in this legacy HUD normally do not use filters.
+                # A filter list is variable-length; stop after preserving any up
+                # bounds already recovered rather than desynchronizing the parser.
+                if flags & 0x10:  # HasFilterList
+                    return result
+                if flags & 0x20:  # HasBlendMode
+                    offset += 1
+            return result
+
+        return None
+
     def resolve(self, character_id: int) -> Bounds | None:
         if character_id in self.cache:
             return self.cache[character_id]
@@ -106,6 +162,8 @@ class BoundsResolver:
                         continue
                     transformed = transform_bounds(child_bounds, child.get("transform", {}))
                     result = union(result, transformed)
+            elif tag.code in {TAG_DEFINE_BUTTON, TAG_DEFINE_BUTTON2}:
+                result = self._button_up_bounds(character_id)
 
             self.cache[character_id] = result
             return result
@@ -163,7 +221,7 @@ def main() -> int:
             continue
 
         character_type = swf.character_type(character_id)
-        if character_type not in {"shape", "shape2", "shape3", "shape4", "sprite"}:
+        if character_type not in {"shape", "shape2", "shape3", "shape4", "sprite", "button", "button2"}:
             continue
         if child.get("visible") is False:
             continue
@@ -182,7 +240,11 @@ def main() -> int:
         draw_x, draw_y, draw_width, draw_height = rect
         depth = int(child["depth"])
         asset_name = f"d{depth}_c{character_id}.png"
-        source_frame = "100" if character_id == 361 else "1"
+        if character_type in {"button", "button2"}:
+            source_frame = "up"
+        else:
+            source_frame = "100" if character_id == 361 else "1"
+
         rows.append({
             "depth": str(depth),
             "name": str(child.get("name", "")),
