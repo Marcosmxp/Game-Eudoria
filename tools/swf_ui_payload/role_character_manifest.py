@@ -121,6 +121,9 @@ class BoundsResolver:
                     if child_bounds is not None:
                         result = union(result, transform_bounds(child_bounds, matrix))
 
+                # Legacy Character buttons do not need filter geometry for their
+                # up-state raster. Stop at a filter list instead of desynchronizing
+                # the button record parser.
                 if flags & 0x10:
                     return result
                 if flags & 0x20:
@@ -186,26 +189,85 @@ def signed_draw_rect(bounds: Bounds, transform: dict) -> tuple[float, float, flo
     )
 
 
+def read_edit_text(swf: Swf, character_id: int) -> dict[str, object]:
+    tag = swf.definitions[character_id]
+    if tag.code != TAG_DEFINE_EDIT_TEXT:
+        raise ValueError(f"Character {character_id} is not DefineEditText")
+
+    offset = tag.start + 2
+    rect, offset = swf._read_rect(offset)
+    flags1 = swf.data[offset]
+    flags2 = swf.data[offset + 1]
+    offset += 2
+
+    has_text = bool(flags1 & 0x80)
+    word_wrap = bool(flags1 & 0x40)
+    multiline = bool(flags1 & 0x20)
+    has_color = bool(flags1 & 0x04)
+    has_max_length = bool(flags1 & 0x02)
+    has_font = bool(flags1 & 0x01)
+
+    has_font_class = bool(flags2 & 0x80)
+    has_layout = bool(flags2 & 0x20)
+    html = bool(flags2 & 0x02)
+
+    font_id = 0
+    font_height = 10.0
+    red = green = blue = alpha = 255
+    align = 0
+
+    if has_font:
+        font_id = struct.unpack_from("<H", swf.data, offset)[0]
+        offset += 2
+    if has_font_class:
+        _, offset = swf._read_cstring(swf.data, offset, tag.end)
+    if has_font:
+        font_height = struct.unpack_from("<H", swf.data, offset)[0] / 20.0
+        offset += 2
+    if has_color:
+        red, green, blue, alpha = swf.data[offset : offset + 4]
+        offset += 4
+    if has_max_length:
+        offset += 2
+    if has_layout:
+        align = int(swf.data[offset])
+        offset += 9
+
+    variable_name, offset = swf._read_cstring(swf.data, offset, tag.end)
+    initial_text = ""
+    if has_text:
+        initial_text, offset = swf._read_cstring(swf.data, offset, tag.end)
+
+    return {
+        "bounds": Bounds(rect[0] / 20.0, rect[2] / 20.0, rect[1] / 20.0, rect[3] / 20.0),
+        "fontId": font_id,
+        "fontHeight": font_height,
+        "red": red,
+        "green": green,
+        "blue": blue,
+        "alpha": alpha,
+        "align": align,
+        "wordWrap": word_wrap,
+        "multiline": multiline,
+        "html": html,
+        "variableName": variable_name,
+        "initialText": initial_text,
+    }
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate exact static visual manifest for PlayerFullInfoUIMC symbol1998")
+    parser = argparse.ArgumentParser(description="Generate exact PlayerFullInfoUIMC symbol1998 manifests")
     parser.add_argument("swf", type=Path)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True, help="Visual manifest TSV")
+    parser.add_argument("--text-output", type=Path, help="DefineEditText manifest TSV")
     parser.add_argument("--root-bounds-output", type=Path)
-    parser.add_argument(
-        "--exclude-ids",
-        nargs="*",
-        type=int,
-        default=[],
-        help="Character IDs already reconstructed manually; keep them out of the auto layer.",
-    )
+    parser.add_argument("--exclude-ids", nargs="*", type=int, default=[])
     args = parser.parse_args()
 
     swf = Swf(args.swf)
     sprite_id = swf.resolve_symbol("symbol1998")
-
     excluded = set(args.exclude_ids)
     resolver = BoundsResolver(swf)
-    rows: list[dict[str, str]] = []
 
     root_bounds = resolver.resolve(sprite_id)
     if args.root_bounds_output and root_bounds is not None:
@@ -217,16 +279,45 @@ def main() -> int:
             encoding="utf-8",
         )
 
+    visual_rows: list[dict[str, str]] = []
+    text_rows: list[dict[str, str]] = []
+
     for child in swf.first_frame(sprite_id):
         character_id = child.get("characterId")
         if character_id is None:
             continue
-
         character_id = int(character_id)
-        if character_id in excluded:
+        character_type = swf.character_type(character_id)
+        transform = child.get("transform", {})
+        depth = int(child["depth"])
+        name = str(child.get("name", ""))
+
+        if character_type == "editText":
+            info = read_edit_text(swf, character_id)
+            rect = signed_draw_rect(info["bounds"], transform)
+            if rect is None:
+                continue
+            x, y, width, height = rect
+            text_rows.append({
+                "depth": str(depth),
+                "name": name,
+                "characterId": str(character_id),
+                "x": f"{x:.6f}",
+                "y": f"{y:.6f}",
+                "width": f"{width:.6f}",
+                "height": f"{height:.6f}",
+                "fontSize": f"{float(info['fontHeight']):.6f}",
+                "red": str(info["red"]),
+                "green": str(info["green"]),
+                "blue": str(info["blue"]),
+                "alpha": str(info["alpha"]),
+                "align": str(info["align"]),
+                "wordWrap": "1" if info["wordWrap"] else "0",
+            })
             continue
 
-        character_type = swf.character_type(character_id)
+        if character_id in excluded:
+            continue
         if character_type not in {"shape", "shape2", "shape3", "shape4", "sprite", "button", "button2"}:
             continue
         if child.get("visible") is False:
@@ -235,23 +326,16 @@ def main() -> int:
         bounds = resolver.resolve(character_id)
         if bounds is None or bounds.width <= 0.0 or bounds.height <= 0.0:
             continue
-
-        transform = child.get("transform", {})
         rect = signed_draw_rect(bounds, transform)
         if rect is None:
             continue
-
         draw_x, draw_y, draw_width, draw_height = rect
-        depth = int(child["depth"])
         asset_name = f"d{depth}_c{character_id}.png"
-        if character_type in {"button", "button2"}:
-            source_frame = "up"
-        else:
-            source_frame = "100" if character_id == 361 else "1"
+        source_frame = "up" if character_type in {"button", "button2"} else ("100" if character_id == 361 else "1")
 
-        rows.append({
+        visual_rows.append({
             "depth": str(depth),
-            "name": str(child.get("name", "")),
+            "name": name,
             "characterId": str(character_id),
             "characterType": character_type,
             "drawX": f"{draw_x:.6f}",
@@ -264,26 +348,23 @@ def main() -> int:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle,
-            fieldnames=[
-                "depth",
-                "name",
-                "characterId",
-                "characterType",
-                "drawX",
-                "drawY",
-                "drawWidth",
-                "drawHeight",
-                "asset",
-                "sourceFrame",
-            ],
-            delimiter="\t",
-        )
+        writer = csv.DictWriter(handle, fieldnames=list(visual_rows[0].keys()) if visual_rows else [
+            "depth", "name", "characterId", "characterType", "drawX", "drawY", "drawWidth", "drawHeight", "asset", "sourceFrame"
+        ], delimiter="\t")
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(visual_rows)
 
-    print(f"Wrote {args.output} ({len(rows)} static visuals)")
+    if args.text_output:
+        args.text_output.parent.mkdir(parents=True, exist_ok=True)
+        fields = ["depth", "name", "characterId", "x", "y", "width", "height", "fontSize", "red", "green", "blue", "alpha", "align", "wordWrap"]
+        with args.text_output.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t")
+            writer.writeheader()
+            writer.writerows(text_rows)
+
+    print(f"Wrote {args.output} ({len(visual_rows)} exact visuals)")
+    if args.text_output:
+        print(f"Wrote {args.text_output} ({len(text_rows)} exact text fields)")
     if args.root_bounds_output and root_bounds is not None:
         print(f"Wrote {args.root_bounds_output} (symbol1998 root bounds)")
     return 0
