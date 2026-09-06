@@ -18,35 +18,45 @@ public:
     void render(SpriteRenderer& renderer, float rootX, float rootY) const;
 
 private:
-    struct TextVisual final {
+    enum class LayerKind : std::uint8_t {
+        Sprite,
+        Text,
+    };
+
+    struct LayerItem final {
+        LayerKind kind = LayerKind::Sprite;
+        int depth = 0;
         float x = 0.0F;
         float y = 0.0F;
         float width = 0.0F;
-        TextTextureResult texture;
+        float height = 0.0F;
+        SpriteTexture sprite;
+        TextTextureResult text;
     };
 
-    struct ReferenceBounds final {
-        float left = 0.0F;
-        float top = 0.0F;
-        float right = 0.0F;
-        float bottom = 0.0F;
-        bool valid = false;
-    };
-
-    void addText(
+    bool loadVisualManifest(
         SpriteRenderer& renderer,
+        const std::filesystem::path& runtimeRoot);
+
+    bool loadTextManifest(
+        SpriteRenderer& renderer,
+        const std::filesystem::path& runtimeRoot);
+
+    void addSyntheticText(
+        SpriteRenderer& renderer,
+        int depth,
         const wchar_t* text,
         float x,
         float y,
         float width,
-        std::uint32_t fontSize = 10,
-        TextHorizontalAlign align = TextHorizontalAlign::Left);
+        float height,
+        std::uint32_t fontSize,
+        TextHorizontalAlign align = TextHorizontalAlign::Center,
+        std::uint8_t red = 255,
+        std::uint8_t green = 255,
+        std::uint8_t blue = 255);
 
-    void loadReferenceBounds(const std::filesystem::path& runtimeRoot);
-
-    SpriteTexture reference_;
-    ReferenceBounds referenceBounds_;
-    std::vector<TextVisual> texts_;
+    std::vector<LayerItem> layers_;
 };
 
 } // namespace eudoria::game::ui
