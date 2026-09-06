@@ -8,9 +8,10 @@ rem ================================================================
 rem EUDORIA ONE CLICK
 rem - Clones/updates the development branch
 rem - Detects/installs Git, CMake and 7-Zip when possible
-rem - Detects Visual Studio 2022 C++ Build Tools
-rem - Finds Crystal Saga.rar and img.rar (or opens a file picker)
+rem - Detects Visual Studio C++ Build Tools
+rem - Finds Crystal Saga.rar, txt.rar and img.rar
 rem - Extracts the real legacy HUD payload
+rem - Extracts/normalizes the real txt task catalog for TaskTracer
 rem - Extracts one existing minimap from img.rar for UI preview
 rem - Builds Eudoria x64 Release
 rem - Starts Eudoria.exe from the repository root
@@ -25,6 +26,7 @@ set "CMAKE_EXE="
 set "SEVENZIP_EXE="
 set "VS_PATH="
 set "CRYSTAL_ARCHIVE="
+set "TXT_ARCHIVE="
 set "IMG_ARCHIVE="
 
 call :Banner
@@ -39,9 +41,9 @@ echo.
 echo ================================================================
 echo Eudoria foi compilado e iniciado.
 echo F11 = tela cheia
-Echo F2  = referencia visual de comparacao
-Echo ESC = sair
-Echo ================================================================
+echo F2  = referencia visual de comparacao
+echo ESC = sair
+echo ================================================================
 echo.
 exit /b 0
 
@@ -82,13 +84,13 @@ echo       7-Zip: !SEVENZIP_EXE!
 call :FindVisualStudio
 if not defined VS_PATH (
     echo.
-    echo Visual Studio 2022 C++ Build Tools nao foi encontrado.
+    echo Visual Studio C++ Build Tools nao foi encontrado.
     echo O instalador pode ser grande e pode pedir permissao de administrador.
     call :WingetInstallVS
     call :FindVisualStudio
 )
 if not defined VS_PATH (
-    echo [ERRO] Visual Studio 2022 com C++ Build Tools nao foi encontrado.
+    echo [ERRO] Visual Studio com C++ Build Tools nao foi encontrado.
     echo Instale o workload "Desktop development with C++" e execute este BAT novamente.
     exit /b 1
 )
@@ -157,10 +159,8 @@ exit /b 0
 :ResolveRepo
 echo [2/6] Preparando repositorio...
 
-rem Default: create Game-Eudoria beside this BAT.
 for %%I in ("%SCRIPT_DIR%Game-Eudoria") do set "REPO_DIR=%%~fI"
 
-rem If this BAT is already inside the repository, use the current repository.
 if exist "%SCRIPT_DIR%.git\HEAD" (
     if exist "%SCRIPT_DIR%CMakeLists.txt" (
         for %%I in ("%SCRIPT_DIR%.") do set "REPO_DIR=%%~fI"
@@ -207,6 +207,17 @@ if not defined CRYSTAL_ARCHIVE (
 )
 echo       HUD payload: !CRYSTAL_ARCHIVE!
 
+call :AutoFindArchive "txt.rar" TXT_ARCHIVE
+if not defined TXT_ARCHIVE (
+    echo       Selecione txt.rar para carregar configuracoes reais do jogo...
+    call :PickFile "Selecione txt.rar (dados reais)" TXT_ARCHIVE
+)
+if defined TXT_ARCHIVE (
+    echo       Data payload: !TXT_ARCHIVE!
+) else (
+    echo       [AVISO] txt.rar nao selecionado. TaskTracer ficara sem catalogo real nesta execucao.
+)
+
 call :AutoFindArchive "img.rar" IMG_ARCHIVE
 if not defined IMG_ARCHIVE (
     echo       Selecione img.rar para carregar o minimapa. Cancelar apenas pula esta etapa.
@@ -236,10 +247,17 @@ set "%~2=!PICK_RESULT!"
 exit /b 0
 
 :ExtractAssets
-echo [4/6] Extraindo HUD original do payload...
+echo [4/6] Extraindo payloads reais...
 pushd "!REPO_DIR!" >nul
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_legacy_hud.ps1" -Archive "!CRYSTAL_ARCHIVE!" -SevenZip "!SEVENZIP_EXE!"
 if errorlevel 1 (popd >nul & exit /b 1)
+
+if defined TXT_ARCHIVE (
+    echo       Extraindo catalogo real de quests/configuracoes de txt.rar...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_legacy_data.ps1" -Archive "!TXT_ARCHIVE!" -SevenZip "!SEVENZIP_EXE!"
+    if errorlevel 1 (popd >nul & exit /b 1)
+)
 
 if defined IMG_ARCHIVE (
     echo       Extraindo um minimapa existente de img.rar para preview da UI...
@@ -248,6 +266,7 @@ if defined IMG_ARCHIVE (
         echo [AVISO] Nenhum minimapa de preview foi extraido. O restante continuara normalmente.
     )
 )
+
 popd >nul
 echo.
 exit /b 0
