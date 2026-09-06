@@ -33,11 +33,13 @@ bool RoleWindowHud::initialize(
     loaded = renderer.loadTexture((runtimeRoot / L"close" / L"down.png").wstring(), close_.down) && loaded;
     loaded = character_.initialize(renderer, runtimeRoot / L"character") && loaded;
 
-    // Strings recovered from txt/idc.json -> RoleUI. They stay here only as
-    // UI localization values; gameplay data is not introduced in this layer.
+    // PlayerBoxUIMC's title field is populated with the current player name by
+    // the live controller. During the UI-only milestone PlayerInfo already uses
+    // Eudoria as the neutral local player name, so the Role header mirrors it
+    // instead of incorrectly hard-coding the word "Character".
     loaded = createTextTexture(
         renderer,
-        L"Character",
+        L"Eudoria",
         static_cast<std::uint32_t>(kTitleTextWidth),
         static_cast<std::uint32_t>(kTitleTextHeight),
         labelStyle(12),
@@ -91,6 +93,10 @@ void RoleWindowHud::update(const HudWindowManager& windows) noexcept {
         hovered_ = PressedAction::None;
         dragging_ = false;
     }
+
+    if (!kFamiliarTabVisible && selectedTab_ == Tab::Familiar) {
+        selectedTab_ = Tab::Character;
+    }
     wasVisible_ = visible;
 }
 
@@ -128,7 +134,9 @@ void RoleWindowHud::render(
     // Tabs begin at depth 13, then titleBox/text and close button.
     drawTab(renderer, Tab::Character, characterLabel_);
     drawTab(renderer, Tab::DivineSoul, divineSoulLabel_);
-    drawTab(renderer, Tab::Familiar, familiarLabel_);
+    if (kFamiliarTabVisible) {
+        drawTab(renderer, Tab::Familiar, familiarLabel_);
+    }
 
     if (titleBox_.valid()) {
         renderer.draw(
@@ -249,7 +257,7 @@ bool RoleWindowHud::onMouseUp(
 
     if (pressed == PressedAction::CharacterTab ||
         pressed == PressedAction::DivineSoulTab ||
-        pressed == PressedAction::FamiliarTab) {
+        (kFamiliarTabVisible && pressed == PressedAction::FamiliarTab)) {
         selectedTab_ = tabForAction(pressed);
         return true;
     }
@@ -306,7 +314,7 @@ RoleWindowHud::PressedAction RoleWindowHud::hitAction(
     if (tabRect(Tab::DivineSoul).contains(localX, localY)) {
         return PressedAction::DivineSoulTab;
     }
-    if (tabRect(Tab::Familiar).contains(localX, localY)) {
+    if (kFamiliarTabVisible && tabRect(Tab::Familiar).contains(localX, localY)) {
         return PressedAction::FamiliarTab;
     }
     if (backgroundRect().contains(localX, localY)) {
