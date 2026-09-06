@@ -10,6 +10,8 @@ rem - Clones/updates the development branch
 rem - Detects/installs Git, CMake and 7-Zip when possible
 rem - Detects Visual Studio C++ Build Tools
 rem - Finds Crystal Saga.rar, txt.rar and img.rar
+rem - Validates each archive by its real payload contents
+rem - Auto-detects txt.rar/img.rar beside Crystal Saga.rar when possible
 rem - Extracts the real legacy HUD payload
 rem - Extracts/normalizes the real txt task catalog for TaskTracer
 rem - Extracts one existing minimap from img.rar for UI preview
@@ -28,6 +30,7 @@ set "VS_PATH="
 set "CRYSTAL_ARCHIVE="
 set "TXT_ARCHIVE="
 set "IMG_ARCHIVE="
+set "PAYLOAD_DIR="
 
 call :Banner
 call :ResolveTools || goto :Fail
@@ -197,20 +200,51 @@ exit /b 0
 echo [3/6] Localizando payloads...
 
 call :AutoFindArchive "Crystal Saga.rar" CRYSTAL_ARCHIVE
+if defined CRYSTAL_ARCHIVE call :ValidateArchive "!CRYSTAL_ARCHIVE!" "scripts/_assets/assets.swf" VALID_ARCHIVE
+if not defined VALID_ARCHIVE set "CRYSTAL_ARCHIVE="
+
+:PickCrystal
 if not defined CRYSTAL_ARCHIVE (
-    echo       Selecione o arquivo Crystal Saga.rar...
-    call :PickFile "Selecione Crystal Saga.rar" CRYSTAL_ARCHIVE
-)
-if not defined CRYSTAL_ARCHIVE (
-    echo [ERRO] Crystal Saga.rar e obrigatorio para reconstruir a HUD real.
-    exit /b 1
+    echo       Selecione CRYSTAL SAGA.RAR ^(HUD/SWF^)...
+    call :PickFile "CRYSTAL SAGA.RAR - HUD e SWF" "Crystal Saga.rar" CRYSTAL_ARCHIVE
+    if not defined CRYSTAL_ARCHIVE (
+        echo [ERRO] Crystal Saga.rar e obrigatorio para reconstruir a HUD real.
+        exit /b 1
+    )
+    call :ValidateArchive "!CRYSTAL_ARCHIVE!" "scripts/_assets/assets.swf" VALID_ARCHIVE
+    if not defined VALID_ARCHIVE (
+        echo       [ARQUIVO ERRADO] Esse RAR nao contem scripts/_assets/assets.swf.
+        echo       Escolha o arquivo Crystal Saga.rar correto.
+        set "CRYSTAL_ARCHIVE="
+        goto :PickCrystal
+    )
 )
 echo       HUD payload: !CRYSTAL_ARCHIVE!
 
-call :AutoFindArchive "txt.rar" TXT_ARCHIVE
+rem txt.rar and img.rar are normally beside Crystal Saga.rar in the decoded
+rem payload directory. Prefer those exact sibling files so they cannot be
+rem accidentally swapped in the file picker.
+for %%I in ("!CRYSTAL_ARCHIVE!") do set "PAYLOAD_DIR=%%~dpI"
+if exist "!PAYLOAD_DIR!txt.rar" set "TXT_ARCHIVE=!PAYLOAD_DIR!txt.rar"
+if exist "!PAYLOAD_DIR!img.rar" set "IMG_ARCHIVE=!PAYLOAD_DIR!img.rar"
+
+if not defined TXT_ARCHIVE call :AutoFindArchive "txt.rar" TXT_ARCHIVE
+if defined TXT_ARCHIVE call :ValidateArchive "!TXT_ARCHIVE!" "txt/itl.json" VALID_ARCHIVE
+if not defined VALID_ARCHIVE set "TXT_ARCHIVE="
+
+:PickTxt
 if not defined TXT_ARCHIVE (
-    echo       Selecione txt.rar para carregar configuracoes reais do jogo...
-    call :PickFile "Selecione txt.rar (dados reais)" TXT_ARCHIVE
+    echo       Selecione TXT.RAR ^(dados/configuracoes/quests^)...
+    call :PickFile "TXT.RAR - dados reais, quests e configuracoes" "txt.rar" TXT_ARCHIVE
+    if defined TXT_ARCHIVE (
+        call :ValidateArchive "!TXT_ARCHIVE!" "txt/itl.json" VALID_ARCHIVE
+        if not defined VALID_ARCHIVE (
+            echo       [ARQUIVO ERRADO] Esse RAR nao contem txt/itl.json.
+            echo       Nao selecione img.rar aqui. Escolha txt.rar.
+            set "TXT_ARCHIVE="
+            goto :PickTxt
+        )
+    )
 )
 if defined TXT_ARCHIVE (
     echo       Data payload: !TXT_ARCHIVE!
@@ -218,10 +252,23 @@ if defined TXT_ARCHIVE (
     echo       [AVISO] txt.rar nao selecionado. TaskTracer ficara sem catalogo real nesta execucao.
 )
 
-call :AutoFindArchive "img.rar" IMG_ARCHIVE
+if not defined IMG_ARCHIVE call :AutoFindArchive "img.rar" IMG_ARCHIVE
+if defined IMG_ARCHIVE call :ValidateArchive "!IMG_ARCHIVE!" "img/p*.jpg" VALID_ARCHIVE
+if not defined VALID_ARCHIVE set "IMG_ARCHIVE="
+
+:PickImg
 if not defined IMG_ARCHIVE (
-    echo       Selecione img.rar para carregar o minimapa. Cancelar apenas pula esta etapa.
-    call :PickFile "Selecione img.rar (opcional)" IMG_ARCHIVE
+    echo       Selecione IMG.RAR ^(minimapas/imagens^). Cancelar apenas pula esta etapa...
+    call :PickFile "IMG.RAR - minimapas e imagens" "img.rar" IMG_ARCHIVE
+    if defined IMG_ARCHIVE (
+        call :ValidateArchive "!IMG_ARCHIVE!" "img/p*.jpg" VALID_ARCHIVE
+        if not defined VALID_ARCHIVE (
+            echo       [ARQUIVO ERRADO] Esse RAR nao contem minimapas img/p*.jpg.
+            echo       Nao selecione txt.rar aqui. Escolha img.rar.
+            set "IMG_ARCHIVE="
+            goto :PickImg
+        )
+    )
 )
 if defined IMG_ARCHIVE (
     echo       Minimap payload: !IMG_ARCHIVE!
@@ -239,11 +286,21 @@ for %%D in ("%USERPROFILE%\Downloads" "%USERPROFILE%\Desktop" "%USERPROFILE%\Doc
 )
 exit /b 0
 
+:ValidateArchive
+set "ARCHIVE_CHECK=%~1"
+set "ARCHIVE_ENTRY=%~2"
+set "%~3="
+if not exist "!ARCHIVE_CHECK!" exit /b 0
+"!SEVENZIP_EXE!" l -ba "!ARCHIVE_CHECK!" "!ARCHIVE_ENTRY!" 2>nul | findstr /R /C:"[^ ]" >nul
+if not errorlevel 1 set "%~3=1"
+exit /b 0
+
 :PickFile
 set "PICK_TITLE=%~1"
+set "PICK_DEFAULT=%~2"
 set "PICK_RESULT="
-for /f "usebackq delims=" %%I in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Title='%PICK_TITLE%'; $d.Filter='RAR archives (*.rar)|*.rar|All files (*.*)|*.*'; if($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){$d.FileName}"`) do set "PICK_RESULT=%%I"
-set "%~2=!PICK_RESULT!"
+for /f "usebackq delims=" %%I in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Title='%PICK_TITLE%'; $d.Filter='RAR archives (*.rar)|*.rar|All files (*.*)|*.*'; $d.FileName='%PICK_DEFAULT%'; if($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){$d.FileName}"`) do set "PICK_RESULT=%%I"
+set "%~3=!PICK_RESULT!"
 exit /b 0
 
 :ExtractAssets
