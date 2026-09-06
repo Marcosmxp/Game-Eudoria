@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "id": "roleWindow",
+  "legacyController": "com.sunweb.game.rpg.playerUI.playerInfo.§_-zd§",
+  "legacyClass": "playerUI.PlayerBoxUIMC",
+  "legacyExport": "symbol4930",
+  "characterId": 4930,
+  "source": {
+    "behavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/playerInfo/§_-zd§.as",
+    "uimc": "Crystal Saga.rar/scripts/playerUI/PlayerBoxUIMC.as",
+    "displayList": "Crystal Saga.rar/scripts/_assets/assets.swf -> symbol4930",
+    "localization": "txt.rar/txt/idc.json -> RoleUI"
+  },
+  "root": {
+    "constructor": "x = stageWidth / 2; y = stageHeight / 2",
+    "legacyInitial": {"x": 600, "y": 320},
+    "resizeListener": false,
+    "draggableBy": "bgBox"
+  },
+  "displayList": [
+    {"depth":1,"name":"bgBox","characterId":154,"x":4,"y":0,"scaleX":3.4275970458984375,"scaleY":5.8653564453125},
+    {"depth":11,"name":"pointChildUI","characterId":181,"x":0,"y":-39},
+    {"depth":13,"name":"characterTab","characterId":436,"x":-215.4,"y":-274.25,"scaleX":1.4256744384765625,"scaleY":1},
+    {"depth":16,"name":"divineSoulTab","characterId":436,"x":-144.4,"y":-274.25,"scaleX":1.4256744384765625,"scaleY":1},
+    {"depth":19,"name":"familiarTab","characterId":436,"x":-72.2,"y":-273.9,"scaleX":1.4256591796875,"scaleY":1},
+    {"depth":22,"name":"titleBox","characterId":187,"x":0.95,"y":-297.1,"scaleX":1.949066162109375,"scaleY":1},
+    {"depth":26,"name":"txtDeyTitle","characterId":4929,"x":-114,"y":-300},
+    {"depth":27,"name":"cmdClose","characterId":172,"x":207.7,"y":-291}
+  ],
+  "resolvedGeometry": {
+    "background": {
+      "shapeCharacterId":153,
+      "shapeBounds":{"left":-66.5,"right":66.5,"top":-52,"bottom":52},
+      "resolvedBounds":{"left":-223.91,"right":231.91,"top":-305.0,"bottom":305.0}
+    },
+    "titleBox": {
+      "shapeCharacterId":186,
+      "shapeBounds":{"left":-56,"right":55,"top":-22,"bottom":22}
+    },
+    "titleText": {
+      "characterId":4929,
+      "bounds":{"left":-2,"right":230,"top":-2,"bottom":17.85},
+      "text":"Character"
+    },
+    "tableButton": {
+      "characterId":436,
+      "normalShape":432,
+      "activeShape":435,
+      "normalBounds":{"left":1,"right":50.1,"top":1,"bottom":18},
+      "activeBounds":{"left":0,"right":50.75,"top":0,"bottom":18}
+    },
+    "close": {
+      "characterId":172,
+      "hitTestCharacterId":171,
+      "hitBounds":{"left":-11,"right":11,"top":-11,"bottom":11}
+    }
+  },
+  "tabs": [
+    {"id":"character","localization":"RoleUI.roleAtt","text":"Character","child":"playerFullInfoUI"},
+    {"id":"divineSoul","localization":"RoleUI.godSoul","text":"Divine Soul","child":"§_-XO§","levelGate":60},
+    {"id":"familiar","localization":"RoleUI.animalAtt","text":"Familiar","child":"animalBoxUI","visibility":"job-dependent"}
+  ],
+  "behavior": {
+    "defaultVisible": false,
+    "showUI": "show Character child every time the container opens",
+    "closeUI": "hide container and close all child UIs",
+    "closeButton": true,
+    "dragging": "startDrag on bgBox MOUSE_DOWN; stopDrag on container MOUSE_UP"
+  },
+  "runtimeMilestone": {
+    "part": "RoleInfo container",
+    "implemented": [
+      "centered PlayerBoxUIMC root",
+      "background from character154/shape153",
+      "title chrome from character187/shape186",
+      "RoleUI Character title",
+      "Character / Divine Soul / Familiar tabs",
+      "TableButton normal/active states",
+      "close button up/over/down states",
+      "dragging by bgBox",
+      "C/control-bar Character visibility integration",
+      "Character tab reset whenever the window opens"
+    ],
+    "next": [
+      "reconstruct playerFullInfoUI symbol1998 as the Character child at pointChildUI (0,-39)",
+      "reconstruct Divine Soul child",
+      "reconstruct Familiar child"
+    ]
+  }
+}
