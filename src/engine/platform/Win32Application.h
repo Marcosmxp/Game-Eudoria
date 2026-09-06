@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 #include "engine/render/D3D11Renderer.h"
+#include "game/data/LegacyTaskCatalog.h"
 #include "game/ui/ControlBar.h"
 #include "game/ui/GameInfoHud.h"
 #include "game/ui/HudWindowManager.h"
@@ -28,6 +29,7 @@ private:
     WINDOWPLACEMENT windowPlacement_{sizeof(WINDOWPLACEMENT)};
     D3D11Renderer renderer_;
     game::ui::HudWindowManager hudWindows_;
+    game::data::LegacyTaskCatalog taskCatalog_;
     game::ui::PlayerInfoHud playerInfo_;
     game::ui::GameInfoHud gameInfo_;
     game::ui::ControlBar controlBar_;
