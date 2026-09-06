@@ -46,6 +46,74 @@ function Invoke-PythonScript {
     return $LASTEXITCODE
 }
 
+# Resolve exact FFDec paths from one archive listing instead of relying on 7-Zip
+# wildcard extraction. Many exported symbols carry linkage names in the folder,
+# e.g. DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC.
+$archiveEntries = @()
+$listing = & $SevenZip l -slt $Archive
+if ($LASTEXITCODE -ne 0) {
+    throw "Could not list Crystal Saga.rar"
+}
+foreach ($line in $listing) {
+    if ($line -like "Path = *") {
+        $value = $line.Substring(7).Replace('\', '/')
+        if ($value -and $value -ne ($Archive.Replace('\', '/'))) {
+            $archiveEntries += $value
+        }
+    }
+}
+
+function Resolve-ArchiveEntry {
+    param(
+        [Parameter(Mandatory = $true)][string]$Type,
+        [Parameter(Mandatory = $true)][int]$CharacterId,
+        [Parameter(Mandatory = $true)][string]$Frame
+    )
+
+    $escapedId = [regex]::Escape([string]$CharacterId)
+    switch ($Type) {
+        { $_ -like "shape*" } {
+            $pattern = "^shapes/$escapedId\.png$"
+        }
+        "sprite" {
+            $escapedFrame = [regex]::Escape($Frame)
+            $pattern = "^sprites/DefineSprite_${escapedId}(?:_[^/]*)?/${escapedFrame}\.png$"
+        }
+        "button" {
+            $pattern = "^buttons/DefineButton_${escapedId}(?:_[^/]*)?/1_up\.png$"
+        }
+        "button2" {
+            $pattern = "^buttons/DefineButton2_${escapedId}(?:_[^/]*)?/1_up\.png$"
+        }
+        default {
+            return $null
+        }
+    }
+
+    return $archiveEntries | Where-Object { $_ -match $pattern } | Select-Object -First 1
+}
+
+function Extract-ResolvedEntry {
+    param(
+        [Parameter(Mandatory = $true)][string]$Entry,
+        [Parameter(Mandatory = $true)][string]$Destination
+    )
+
+    & $SevenZip x $Archive $Entry "-o$tempPath" -y | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        return $false
+    }
+
+    $source = Join-Path $tempPath ($Entry -replace '/', [IO.Path]::DirectorySeparatorChar)
+    if (-not (Test-Path $source)) {
+        return $false
+    }
+
+    New-Item -ItemType Directory -Force -Path (Split-Path $Destination -Parent) | Out-Null
+    Copy-Item $source $Destination -Force
+    return $true
+}
+
 function Copy-AutoVisual {
     param(
         [Parameter(Mandatory = $true)][PSCustomObject]$Row,
@@ -55,50 +123,18 @@ function Copy-AutoVisual {
     $characterId = [int]$Row.characterId
     $frame = [string]$Row.sourceFrame
     $type = [string]$Row.characterType
-    $source = $null
+    $entry = Resolve-ArchiveEntry -Type $type -CharacterId $characterId -Frame $frame
 
-    if ($type -like "shape*") {
-        $entry = "shapes/$characterId.png"
-        & $SevenZip x $Archive $entry "-o$tempPath" -y | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $candidate = Join-Path $tempPath ($entry -replace '/', [IO.Path]::DirectorySeparatorChar)
-            if (Test-Path $candidate) {
-                $source = Get-Item $candidate
-            }
-        }
-    }
-    elseif ($type -eq "sprite") {
-        $entry = "sprites/DefineSprite_$characterId*/$frame.png"
-        & $SevenZip x $Archive $entry "-o$tempPath" -y | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $spritesRoot = Join-Path $tempPath "sprites"
-            if (Test-Path $spritesRoot) {
-                $source = Get-ChildItem -Path $spritesRoot -Recurse -File -Filter "$frame.png" |
-                    Where-Object { $_.Directory.Name -like "DefineSprite_$characterId*" } |
-                    Select-Object -First 1
-            }
-        }
-    }
-    elseif ($type -eq "button" -or $type -eq "button2") {
-        $prefix = if ($type -eq "button2") { "DefineButton2" } else { "DefineButton" }
-        $entry = "buttons/${prefix}_$characterId*/1_up.png"
-        & $SevenZip x $Archive $entry "-o$tempPath" -y | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $buttonsRoot = Join-Path $tempPath "buttons"
-            if (Test-Path $buttonsRoot) {
-                $source = Get-ChildItem -Path $buttonsRoot -Recurse -File -Filter "1_up.png" |
-                    Where-Object { $_.Directory.Name -like "${prefix}_$characterId*" } |
-                    Select-Object -First 1
-            }
-        }
-    }
-
-    if ($null -eq $source) {
-        Write-Host "[Role payload] Static visual not found for character $characterId ($type); skipping $($Row.name)."
+    if (-not $entry) {
+        Write-Host "[Role payload] Asset path not found for character $characterId ($type); skipping $($Row.name)."
         return $false
     }
 
-    Copy-Item $source.FullName $Destination -Force
+    if (-not (Extract-ResolvedEntry -Entry $entry -Destination $Destination)) {
+        Write-Host "[Role payload] Failed to extract $entry for $($Row.name)."
+        return $false
+    }
+
     return $true
 }
 
@@ -145,10 +181,6 @@ try {
     Write-Host "Role Character exact symbol1998 payload written to $outputPath"
     Write-Host "Role Character display-list table written to $tsv"
 
-    # Build a second manifest for first-frame static shapes/sprites/buttons that
-    # are not already handled by the stable manual reconstruction. This recovers
-    # genuine payload decorations and feature controls without duplicating the
-    # known equipment/panel/progress/MainButton/attribute-control layer.
     $manifestTool = Join-Path $root "tools\swf_ui_payload\role_character_manifest.py"
     $manifest = Join-Path $outputDirectory "auto_manifest.tsv"
     if (Test-Path $manifestTool) {
@@ -164,13 +196,29 @@ try {
 
             $rows = Import-Csv -Path $manifest -Delimiter "`t"
             $copied = 0
+            $failed = @()
             foreach ($row in $rows) {
                 $destination = Join-Path $autoDirectory ([string]$row.asset)
                 if (Copy-AutoVisual -Row $row -Destination $destination) {
                     $copied++
                 }
+                else {
+                    $failed += "$($row.depth):$($row.name):$($row.characterId):$($row.characterType)"
+                }
             }
+
+            $failedPath = Join-Path $outputDirectory "auto_missing.txt"
+            if ($failed.Count -gt 0) {
+                $failed | Set-Content -Path $failedPath -Encoding UTF8
+            }
+            else {
+                Remove-Item $failedPath -Force -ErrorAction SilentlyContinue
+            }
+
             Write-Host "Role Character auto payload layer extracted: $copied / $($rows.Count) visuals."
+            if ($failed.Count -gt 0) {
+                Write-Host "[Role payload] Missing auto visuals recorded in $failedPath"
+            }
         }
         else {
             Write-Host "[Role payload] Static visual manifest generation failed; continuing with the stable manual layer."
