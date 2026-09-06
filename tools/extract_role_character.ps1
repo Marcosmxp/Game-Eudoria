@@ -77,10 +77,18 @@ $buttonStates = [ordered]@{
 try {
     # PlayerFullInfoUIMC symbol1998 core display-list assets.
     Extract-Entry -Entry "shapes/1884.png" -Destination (Join-Path $outputPath "equipment_panel.png")
-    Extract-Entry -Entry "sprites/DefineSprite_276/1.png" -Destination (Join-Path $outputPath "equipment_slot.png")
+
+    # Some FFDec export folders include the AS3 linkage name after the character
+    # id. Use the exact paths present in Crystal Saga.rar rather than assuming
+    # every sprite folder is named only DefineSprite_<id>.
+    Extract-Entry `
+        -Entry "sprites/DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC/1.png" `
+        -Destination (Join-Path $outputPath "equipment_slot.png")
     Extract-Entry -Entry "sprites/DefineSprite_304/1.png" -Destination (Join-Path $outputPath "panel.png")
     Extract-Entry -Entry "sprites/DefineSprite_263/1.png" -Destination (Join-Path $outputPath "value_back.png")
-    Extract-Entry -Entry "sprites/DefineSprite_89/1.png" -Destination (Join-Path $outputPath "main_button.png")
+    Extract-Entry `
+        -Entry "sprites/DefineSprite_89_MainButton_MainButton/1.png" `
+        -Destination (Join-Path $outputPath "main_button.png")
 
     # Both expBar and the secondary meter are symbol361 and are initialized at
     # frame 100 by the original PlayerFullInfo controller. Keep all 100 frames
