@@ -13,6 +13,7 @@ rem - Finds Crystal Saga.rar, txt.rar and img.rar
 rem - Validates each archive by its real payload contents
 rem - Auto-detects txt.rar/img.rar beside Crystal Saga.rar when possible
 rem - Extracts the real legacy HUD payload
+rem - Extracts Role/Character display-list assets from the HUD payload
 rem - Extracts/normalizes the real txt task catalog for TaskTracer
 rem - Extracts one existing minimap from img.rar for UI preview
 rem - Builds Eudoria x64 Release
@@ -308,6 +309,10 @@ echo [4/6] Extraindo payloads reais...
 pushd "!REPO_DIR!" >nul
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_legacy_hud.ps1" -Archive "!CRYSTAL_ARCHIVE!" -SevenZip "!SEVENZIP_EXE!"
+if errorlevel 1 (popd >nul & exit /b 1)
+
+echo       Extraindo UI Character do payload real...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\extract_role_character.ps1" -Archive "!CRYSTAL_ARCHIVE!" -SevenZip "!SEVENZIP_EXE!"
 if errorlevel 1 (popd >nul & exit /b 1)
 
 if defined TXT_ARCHIVE (
