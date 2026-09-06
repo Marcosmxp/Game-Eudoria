@@ -79,6 +79,19 @@ function Copy-AutoVisual {
             }
         }
     }
+    elseif ($type -eq "button" -or $type -eq "button2") {
+        $prefix = if ($type -eq "button2") { "DefineButton2" } else { "DefineButton" }
+        $entry = "buttons/${prefix}_$characterId*/1_up.png"
+        & $SevenZip x $Archive $entry "-o$tempPath" -y | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $buttonsRoot = Join-Path $tempPath "buttons"
+            if (Test-Path $buttonsRoot) {
+                $source = Get-ChildItem -Path $buttonsRoot -Recurse -File -Filter "1_up.png" |
+                    Where-Object { $_.Directory.Name -like "${prefix}_$characterId*" } |
+                    Select-Object -First 1
+            }
+        }
+    }
 
     if ($null -eq $source) {
         Write-Host "[Role payload] Static visual not found for character $characterId ($type); skipping $($Row.name)."
@@ -132,10 +145,10 @@ try {
     Write-Host "Role Character exact symbol1998 payload written to $outputPath"
     Write-Host "Role Character display-list table written to $tsv"
 
-    # Build a second manifest for first-frame static shapes/sprites that are not
-    # already handled by the stable manual reconstruction. This recovers genuine
-    # payload decorations/icons while avoiding duplicate rendering of the known
-    # equipment panel, slots, panels, value backs, progress meter and MainButton.
+    # Build a second manifest for first-frame static shapes/sprites/buttons that
+    # are not already handled by the stable manual reconstruction. This recovers
+    # genuine payload decorations and feature controls without duplicating the
+    # known equipment/panel/progress/MainButton/attribute-control layer.
     $manifestTool = Join-Path $root "tools\swf_ui_payload\role_character_manifest.py"
     $manifest = Join-Path $outputDirectory "auto_manifest.tsv"
     if (Test-Path $manifestTool) {
@@ -143,7 +156,7 @@ try {
             $manifestTool,
             $swf,
             "--output", $manifest,
-            "--exclude-ids", "1884", "276", "304", "263", "361", "89"
+            "--exclude-ids", "1884", "276", "304", "263", "361", "89", "908", "1914", "1917"
         )
         if ($exitCode -eq 0 -and (Test-Path $manifest)) {
             Remove-Item $autoDirectory -Recurse -Force -ErrorAction SilentlyContinue
