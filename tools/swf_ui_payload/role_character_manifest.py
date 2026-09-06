@@ -135,6 +135,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate exact static visual manifest for PlayerFullInfoUIMC symbol1998")
     parser.add_argument("swf", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--exclude-ids",
+        nargs="*",
+        type=int,
+        default=[],
+        help="Character IDs already reconstructed manually; keep them out of the auto layer.",
+    )
     args = parser.parse_args()
 
     swf = Swf(args.swf)
@@ -142,6 +149,7 @@ def main() -> int:
     if sprite_id is None:
         raise KeyError("SWF export not found: symbol1998")
 
+    excluded = set(args.exclude_ids)
     resolver = BoundsResolver(swf)
     rows: list[dict[str, str]] = []
 
@@ -151,6 +159,9 @@ def main() -> int:
             continue
 
         character_id = int(character_id)
+        if character_id in excluded:
+            continue
+
         character_type = swf.character_type(character_id)
         if character_type not in {"shape", "shape2", "shape3", "shape4", "sprite"}:
             continue
