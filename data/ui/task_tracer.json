@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "taskTracer",
   "legacyClass": "playerUI.TaskTracerUIMC",
   "legacyExport": "symbol4135",
@@ -10,8 +10,25 @@
     "uimc": "Crystal Saga.rar/scripts/playerUI/TaskTracerUIMC.as",
     "taskEntryBehavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerBoxUI.as",
     "taskEntryUimc": "Crystal Saga.rar/scripts/playerUI/TaskTracerBoxUIMC.as",
+    "taskManager": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/task/TaskManager.as",
+    "modelBootstrap": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/module/ResLoadModule.as",
     "localization": "txt.rar/txt/idc.json -> TaskTracerUI",
     "scrollbar": "Crystal Saga.rar/scripts/fl/controls/ScrollBar.as"
+  },
+  "dataBinding": {
+    "taskDefinitions": "txt.rar/txt/itl.json",
+    "taskDefinitionCountObserved": 2848,
+    "legacyBootstrap": "TaskManager.init(decodeJson(getInfContent(\"itl\")))",
+    "npcDefinitions": "txt.rar/txt/imb.json",
+    "mapDefinitions": "txt.rar/txt/imw.json",
+    "runtimeNormalizedCatalog": "legacy_assets/runtime/data/tasks_ui.tsv",
+    "rawPreserved": [
+      "legacy_assets/runtime/data/raw/itl.json",
+      "legacy_assets/runtime/data/raw/imb.json",
+      "legacy_assets/runtime/data/raw/imw.json"
+    ],
+    "uiPhaseBehavior": "Current remains state-driven and therefore empty until the offline TaskManager/player progression state exists. Available can use a deterministic Tyria Village main-quest preview whose names/NPC/map labels all come from the real payload.",
+    "futureStateBinding": "TaskManager condition evaluation will replace the preview selection without changing TaskTracer rendering."
   },
   "localization": {
     "txtTitle": "Quest Tracking",
@@ -120,7 +137,7 @@
     "scrollThumb":"max(13, pageSize / (maxScrollPosition + pageSize) * track.height)"
   },
   "runtimeMilestone": {
-    "part":3,
+    "part":4,
     "implemented":[
       "symbol4135 composite removed from runtime",
       "titleBox rebuilt from character304/shape303",
@@ -136,18 +153,20 @@
       "numeric taskKind sorting",
       "task entry expand/collapse",
       "More Info opens local Quests window state",
-      "content clipping"
+      "content clipping",
+      "real task definitions loaded from txt/itl.json",
+      "NPC labels resolved through txt/imb.json",
+      "map labels resolved through txt/imw.json",
+      "raw task/NPC/map payloads preserved for the future offline TaskManager"
     ],
-    "removed":[
-      "pre-alpha Eudoria reconstruction fixture quests",
-      "invented View Task label",
-      "full task_tracer.reference.png runtime composite",
-      "large white FFDec UIScrollBar component placeholder"
+    "temporary":[
+      "Available tab uses a real-data Tyria Village main-quest preview until player/task progression state exists"
     ],
     "next":[
-      "bind tracked/available tasks to offline TaskManager using txt task payload",
+      "implement offline TaskManager state and evaluate receiveRule/finishRule conditions",
+      "bind accepted tasks to Current",
       "decode HTML condition links and NPC/map actions",
-      "load localization catalog generically instead of the current recovered TaskTracer strings"
+      "load localization catalog generically"
     ]
   }
 }
