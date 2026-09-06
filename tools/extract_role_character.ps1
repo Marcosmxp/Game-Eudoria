@@ -85,18 +85,22 @@ function Extract-Frames {
     }
 }
 
-function Write-FallbackReferenceBounds {
+function Write-CalibratedReferenceBounds {
     param([Parameter(Mandatory = $true)][string]$ReferencePath)
 
-    # PlayerFullInfoUIMC symbol1998 is centered on pointChildUI. These local
-    # bounds are recovered from the stable display-list reconstruction already
-    # verified in the payload: the equipment panel starts at x=-211.75 and the
-    # top controls start around y=-230. Only left/top are required by the native
-    # renderer; right/bottom are derived from the actual FFDec raster size.
-    $left = -211.75
-    $top = -230.0
-    $width = 425
-    $height = 555
+    # FFDec exports symbol1998 on a canvas with transparent left/top padding.
+    # The visible equipment panel (shape1884) is placed by the SWF at:
+    #   shape bounds  = -186.75..50.75, -164.75..74.75
+    #   placement     = -25, 11
+    # so its global top-left is (-211.75, -153.75).
+    # In the original symbol1998 raster the same panel starts at pixel (121,77).
+    # Therefore the full FFDec canvas origin is exactly:
+    #   X = -211.75 - 121 = -332.75
+    #   Y = -153.75 -  77 = -230.75
+    $left = -332.75
+    $top = -230.75
+    $width = 563
+    $height = 723
 
     try {
         Add-Type -AssemblyName System.Drawing -ErrorAction Stop
@@ -110,7 +114,7 @@ function Write-FallbackReferenceBounds {
         }
     }
     catch {
-        Write-Host "[Role Character] Could not read reference PNG dimensions; using payload fallback dimensions."
+        Write-Host "[Role Character] Could not read reference PNG dimensions; using the known symbol1998 canvas size."
     }
 
     $right = $left + $width
@@ -121,7 +125,7 @@ function Write-FallbackReferenceBounds {
         "$left`t$top`t$right`t$bottom"
     ) | Set-Content -Path $boundsPath -Encoding UTF8
 
-    Write-Host "Role Character fallback reference bounds written to $boundsPath"
+    Write-Host "Role Character calibrated reference bounds written to $boundsPath"
 }
 
 $buttonStates = [ordered]@{
@@ -134,21 +138,16 @@ $buttonStates = [ordered]@{
 $referencePath = Join-Path $outputPath "reference.png"
 
 try {
-    # Character uses the complete PlayerFullInfoUIMC first-frame raster as the
-    # visual baseline. Resolve the FFDec linkage-suffixed folder from the real
-    # archive rather than assuming a fixed folder name.
     $referenceEntry = Resolve-ArchiveEntry -Pattern '^sprites/DefineSprite_1998(?:_[^/]*)?/1\.png$'
     if (-not $referenceEntry) {
         throw "PlayerFullInfoUIMC symbol1998 reference raster was not found in Crystal Saga.rar"
     }
     Extract-Entry -Entry $referenceEntry -Destination $referencePath
+    Write-CalibratedReferenceBounds -ReferencePath $referencePath
 
-    # Always create usable bounds before optional SWF diagnostics run. This keeps
-    # OneClick functional even if the lightweight Python parser encounters an
-    # unsupported PlaceObject feature in this unusually complex symbol.
-    Write-FallbackReferenceBounds -ReferencePath $referencePath
-
-    # Keep individual assets as diagnostics/future interactive decomposition.
+    # Keep these assets available for the next pass where interactive states are
+    # layered on top of the visually locked symbol1998 base. They are diagnostics
+    # only in the current fidelity pass and are not used to reconstruct the base.
     Extract-Entry -Entry "shapes/1884.png" -Destination (Join-Path $outputPath "equipment_panel.png")
     Extract-Entry `
         -Entry "sprites/DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC/1.png" `
@@ -180,18 +179,24 @@ finally {
 
 Write-Host "Role Character payload reference and diagnostic assets extracted to $outputPath"
 
-# The SWF dump is useful for diagnostics and can replace the fallback bounds
-# with more exact values, but it must never stop the game build. The runtime has
-# already received reference.png + reference_bounds.tsv above.
+# Diagnostics may still generate visual/text manifests for later interactive
+# reconstruction, but they are not allowed to redefine the FFDec canvas origin
+# used by the live UI.
 $dumpTool = Join-Path $root "tools\dump_role_character_payload.ps1"
 if (Test-Path $dumpTool) {
     try {
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dumpTool -Archive $Archive -SevenZip $SevenZip
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "[Role Character] Exact SWF payload dump failed; using the extracted reference raster and fallback bounds."
+            Write-Host "[Role Character] Exact SWF diagnostic dump failed; continuing with the original symbol1998 raster."
         }
     }
     catch {
-        Write-Host "[Role Character] Exact SWF payload dump skipped: $($_.Exception.Message)"
+        Write-Host "[Role Character] Exact SWF diagnostic dump skipped: $($_.Exception.Message)"
     }
 }
+
+# dump_role_character_payload.ps1 can write reference_bounds.tsv as a recursive
+# symbol bound. That value is useful diagnostically but is NOT the FFDec canvas
+# origin. Rewrite the calibrated raster coordinates last so runtime placement is
+# deterministic on every OneClick run.
+Write-CalibratedReferenceBounds -ReferencePath $referencePath
