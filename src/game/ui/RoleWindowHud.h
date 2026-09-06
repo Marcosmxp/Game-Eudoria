@@ -3,6 +3,7 @@
 #include "engine/render/SpriteRenderer.h"
 #include "engine/render/TextRasterizer.h"
 #include "game/ui/HudWindowManager.h"
+#include "game/ui/RoleCharacterHud.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -84,12 +85,6 @@ private:
     [[nodiscard]] Rect tabRect(Tab tab) const noexcept;
 
     [[nodiscard]] static float tabX(Tab tab) noexcept;
-    [[nodiscard]] static const TextTextureResult& tabLabel(
-        Tab tab,
-        const TextTextureResult& character,
-        const TextTextureResult& divineSoul,
-        const TextTextureResult& familiar) noexcept;
-
     [[nodiscard]] PressedAction hitAction(float localX, float localY) const noexcept;
     [[nodiscard]] static Tab tabForAction(PressedAction action) noexcept;
     [[nodiscard]] const SpriteTexture* closeState() const noexcept;
@@ -130,6 +125,11 @@ private:
     static constexpr float kTitleTextWidth = 232.0F;
     static constexpr float kTitleTextHeight = 20.0F;
 
+    // pointChildUI is depth 11 in symbol4930. The Character child
+    // PlayerFullInfoUIMC is mounted exactly here by PlayerBoxUI.
+    static constexpr float kChildPointX = 0.0F;
+    static constexpr float kChildPointY = -39.0F;
+
     // TableButton character436. Shape432 = normal, shape435 = active.
     static constexpr float kCharacterTabX = -215.4F;
     static constexpr float kDivineSoulTabX = -144.4F;
@@ -168,6 +168,8 @@ private:
     TextTextureResult characterLabel_;
     TextTextureResult divineSoulLabel_;
     TextTextureResult familiarLabel_;
+
+    RoleCharacterHud character_;
 
     float rootX_ = kInitialRootX;
     float rootY_ = kInitialRootY;
