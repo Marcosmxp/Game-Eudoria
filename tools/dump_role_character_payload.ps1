@@ -79,6 +79,77 @@ function Resolve-ArchiveEntry {
     return $archiveEntries | Where-Object { $_ -match $pattern } | Select-Object -First 1
 }
 
+$script:drawingReady = $false
+function Normalize-VisualRaster {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    # FFDec often exports MovieClip frame PNGs on a canvas much larger than the
+    # symbol's real Flash bounds. MainButton (symbol89), for example, is exported
+    # as roughly 111x300 even though its visible first-frame skin is ~100x22.
+    # Drawing that full transparent canvas into the SWF bounds makes the button
+    # appear almost invisible. Crop only transparent OUTER padding; the manifest
+    # still supplies the exact Flash transform/bounds used by the native renderer.
+    try {
+        if (-not $script:drawingReady) {
+            Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+            $script:drawingReady = $true
+        }
+
+        $bitmap = New-Object System.Drawing.Bitmap($Path)
+        try {
+            $minX = $bitmap.Width
+            $minY = $bitmap.Height
+            $maxX = -1
+            $maxY = -1
+
+            for ($y = 0; $y -lt $bitmap.Height; $y++) {
+                for ($x = 0; $x -lt $bitmap.Width; $x++) {
+                    if ($bitmap.GetPixel($x, $y).A -gt 0) {
+                        if ($x -lt $minX) { $minX = $x }
+                        if ($x -gt $maxX) { $maxX = $x }
+                        if ($y -lt $minY) { $minY = $y }
+                        if ($y -gt $maxY) { $maxY = $y }
+                    }
+                }
+            }
+
+            if ($maxX -lt 0 -or $maxY -lt 0) {
+                return $false
+            }
+
+            $cropWidth = $maxX - $minX + 1
+            $cropHeight = $maxY - $minY + 1
+            if ($minX -eq 0 -and $minY -eq 0 -and
+                $cropWidth -eq $bitmap.Width -and $cropHeight -eq $bitmap.Height) {
+                return $false
+            }
+
+            $rectangle = New-Object System.Drawing.Rectangle($minX, $minY, $cropWidth, $cropHeight)
+            $cropped = $bitmap.Clone($rectangle, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+            try {
+                $tempPng = "$Path.normalized.png"
+                $cropped.Save($tempPng, [System.Drawing.Imaging.ImageFormat]::Png)
+            }
+            finally {
+                $cropped.Dispose()
+            }
+        }
+        finally {
+            $bitmap.Dispose()
+        }
+
+        if (Test-Path "$Path.normalized.png") {
+            Move-Item "$Path.normalized.png" $Path -Force
+            return $true
+        }
+    }
+    catch {
+        Write-Host "[Role Character] Could not normalize transparent padding for $Path : $($_.Exception.Message)"
+    }
+
+    return $false
+}
+
 function Extract-ResolvedEntry {
     param(
         [Parameter(Mandatory = $true)][string]$Entry,
@@ -93,6 +164,7 @@ function Extract-ResolvedEntry {
 
     New-Item -ItemType Directory -Force -Path (Split-Path $Destination -Parent) | Out-Null
     Copy-Item $source $Destination -Force
+    [void](Normalize-VisualRaster -Path $Destination)
     return $true
 }
 
@@ -160,7 +232,7 @@ try {
 
     Write-Host "Role Character exact visual manifest: $($rows.Count) display objects."
     Write-Host "Role Character exact text manifest generated from DefineEditText fields."
-    Write-Host "Role Character visual assets extracted: $copied / $($rows.Count)."
+    Write-Host "Role Character visual assets extracted and normalized: $copied / $($rows.Count)."
     if ($failed.Count -gt 0) {
         Write-Host "[Role Character] Missing visual assets recorded in $failedPath"
     }
