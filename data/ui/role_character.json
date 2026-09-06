@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "roleCharacter",
+  "legacyClass": "playerUI.PlayerFullInfoUIMC",
+  "legacyExport": "symbol1998",
+  "characterId": 1998,
+  "parent": {
+    "ui": "PlayerBoxUIMC/symbol4930",
+    "mountPoint": {"name":"pointChildUI","x":0,"y":-39}
+  },
+  "source": {
+    "behavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/playerInfo/§_-08d§.as",
+    "uimc": "Crystal Saga.rar/scripts/playerUI/PlayerFullInfoUIMC.as",
+    "displayList": "Crystal Saga.rar/scripts/_assets/assets.swf -> symbol1998",
+    "localization": "txt.rar/txt/idc.json -> RoleUI"
+  },
+  "coreAssets": {
+    "equipmentPanel": {"characterId":1884,"placement":{"x":-25,"y":11},"bounds":{"left":-186.75,"right":50.75,"top":-164.75,"bottom":74.75}},
+    "equipmentSlot": {"characterId":276,"bounds":{"left":-3,"right":35,"top":-3,"bottom":35}},
+    "panel": {"characterId":304,"shapeCharacterId":303,"bounds":{"left":-24,"right":24,"top":-24,"bottom":24}},
+    "valueBack": {"characterId":263,"bounds":{"left":-21,"right":21,"top":-21,"bottom":21}},
+    "progress": {"characterId":361,"frames":100,"initialFrame":100,"bounds":{"left":-250.49958,"right":76.5,"top":-12.49652,"bottom":12.50464}}
+  },
+  "equipmentSlots": [
+    ["bagSoul",-17.5,-146],["bagAmulet",-17.5,-32],["bagRing",-17.5,6],["bagWing",-17.5,-70],
+    ["bagMedal",-17.5,-108],["bagRide",-17.5,44],["bagFashionHat",-128,44],["bagFashionClothes",-86,44],
+    ["bagShoes",-199,-32],["bagGlove",-199,-70],["bagClothes",-199,-108],["bagShield",-199,6],
+    ["bagWeapon",-199,44],["bagHat",-199,-146],["bagBanner",-60,-146],["bagCloak",-152,-146],
+    ["bagTalisman",47,28.35],["bagHoly",-152,-108]
+  ],
+  "panels": [
+    {"x":-130,"y":154,"scaleX":3.4135437,"scaleY":2.6248322},
+    {"x":82,"y":154,"scaleX":5.3534241,"scaleY":2.6253357},
+    {"x":0,"y":256,"scaleX":8.7530823,"scaleY":1.5206299},
+    {"x":0,"y":309.95,"scaleX":8.7530823,"scaleY":0.6249237}
+  ],
+  "progressBars": {
+    "expBar":{"x":-79.5,"y":-168.05,"scaleX":1,"scaleY":1},
+    "secondary":{"x":170.5,"y":-47,"scaleX":0.53208923,"scaleY":1}
+  },
+  "attributeButtons": {
+    "addOne":{"characterId":908,"x":-77,"rowsY":[103.4,122.5,141,160.5]},
+    "removeOne":{"characterId":1914,"x":-61.4,"rowsY":[103.4,122.5,141,160.5]},
+    "addAll":{"characterId":1917,"x":-93,"rowsY":[103.4,122.5,141,160.5]}
+  },
+  "localization": {
+    "equipment":["Sperion","Helm","Armor","Gloves","Boots","Weap","Offhand","Wings","Neck","Ring","Insig","Mount","Hat","Coat","Banner","Cape","Talisman","Artefact"],
+    "identity":["Title:","Level:","EXP:","Class:","Plane:","Rank:","Honor:","Guild:","PK Lvl:"],
+    "primary":["HP:","MP:","Crystal Essence:","Strength:","Agility:","Intellect:","Endurance:","Points:"],
+    "combat":["PATK:","MATK:","Heal:","PDEF:","MDEF:","Hit:","Dodge:","Crit:"],
+    "bonus":["Luck:","Luck Def:","Crit Dmg:","Crit Def:","AP:","AP Def:","HP Regen:","MP Regen:","Atk Spd:","Cast Spd:","Move Spd:"]
+  },
+  "runtimeMilestone": {
+    "implemented": [
+      "PlayerFullInfo mounted at the exact pointChildUI position",
+      "equipment panel and all 18 slot frames",
+      "four payload panel backgrounds",
+      "five right-side value backings",
+      "EXP and secondary progress frame 100",
+      "attribute add/remove/add-all visuals",
+      "localized equipment, identity, primary, combat and bonus labels",
+      "neutral placeholder values without gameplay stat calculations",
+      "payload MainButton chrome for Auto, OK, Title, Achievements, Nobility, Arena Rewards, Synthesize and Gear Evolve"
+    ],
+    "deferredToGameplaySystems": [
+      "real level/EXP values",
+      "equipment contents",
+      "attribute allocation mutation",
+      "combat/stat calculations",
+      "feature eligibility and unlock gates"
+    ],
+    "nextUiParts": [
+      "special Character feature buttons/icons from symbol1998",
+      "Divine Soul tab child",
+      "Familiar tab child"
+    ]
+  }
+}
