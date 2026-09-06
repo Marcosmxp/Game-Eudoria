@@ -100,6 +100,12 @@ private:
     static constexpr float kInitialRootX = 600.0F;
     static constexpr float kInitialRootY = 320.0F;
 
+    // Familiar is job-dependent in the original PlayerBox controller. The
+    // current UI milestone has no real player job/class state yet, therefore it
+    // stays hidden instead of being forced visible. This also matches the live
+    // reference screen supplied by the user (Character + Divine Soul only).
+    static constexpr bool kFamiliarTabVisible = false;
+
     // symbol4930 / PlayerBoxUIMC exact first-frame display-list geometry.
     static constexpr float kBackgroundPlacementX = 4.0F;
     static constexpr float kBackgroundPlacementY = 0.0F;
