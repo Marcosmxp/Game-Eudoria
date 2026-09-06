@@ -8,6 +8,7 @@ param(
     [string]$GameInfoOutput = "legacy_assets/runtime/ui/game_info",
     [string]$SmallMapOutput = "legacy_assets/runtime/ui/small_map",
     [string]$TaskTracerOutput = "legacy_assets/runtime/ui/task_tracer",
+    [string]$RoleWindowOutput = "legacy_assets/runtime/ui/role_window",
     [string]$SevenZip = "7z"
 )
 
@@ -27,9 +28,10 @@ $playerInfoOutputPath = Join-Path $root $PlayerInfoOutput
 $gameInfoOutputPath = Join-Path $root $GameInfoOutput
 $smallMapOutputPath = Join-Path $root $SmallMapOutput
 $taskTracerOutputPath = Join-Path $root $TaskTracerOutput
+$roleWindowOutputPath = Join-Path $root $RoleWindowOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
 
-@($outputPath, $runtimeOutputPath, $playerInfoOutputPath, $gameInfoOutputPath, $smallMapOutputPath, $taskTracerOutputPath, $tempPath) |
+@($outputPath, $runtimeOutputPath, $playerInfoOutputPath, $gameInfoOutputPath, $smallMapOutputPath, $taskTracerOutputPath, $roleWindowOutputPath, $tempPath) |
     ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
 
 function Extract-LegacyEntry {
@@ -117,6 +119,8 @@ $references = @{
     "sprites/DefineSprite_1825_playerUI.SmallMapUIMC_playerUI.SmallMapUIMC/1.png" = "small_map.reference.png"
     "sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png" = "task_tracer.reference.png"
     "sprites/DefineSprite_5665_playerUI.TaskTracerBoxUIMC_playerUI.TaskTracerBoxUIMC/1.png" = "task_tracer_box.reference.png"
+    "sprites/DefineSprite_4930_playerUI.PlayerBoxUIMC_playerUI.PlayerBoxUIMC/1.png" = "role_window.reference.png"
+    "sprites/DefineSprite_1998_playerUI.PlayerFullInfoUIMC_playerUI.PlayerFullInfoUIMC/1.png" = "role_character.reference.png"
 }
 
 $controlBarButtons = [ordered]@{
@@ -192,6 +196,18 @@ try {
     Extract-LegacyEntry -Entry "shapes/198.png" -Destination (Join-Path $taskTracerOutputPath "scroll/thumb.png")
     Extract-LegacyEntry -Entry "shapes/208.png" -Destination (Join-Path $taskTracerOutputPath "scroll/thumb_icon.png")
 
+    # Role / Character container: PlayerBoxUIMC symbol4930. This is rebuilt
+    # from the actual first-frame display list instead of the FFDec composite.
+    Extract-LegacyEntry -Entry "shapes/153.png" -Destination (Join-Path $roleWindowOutputPath "background.png")
+    Extract-LegacyEntry -Entry "shapes/186.png" -Destination (Join-Path $roleWindowOutputPath "title_box.png")
+    Extract-LegacyEntry -Entry "shapes/432.png" -Destination (Join-Path $roleWindowOutputPath "tab/normal.png")
+    Extract-LegacyEntry -Entry "shapes/435.png" -Destination (Join-Path $roleWindowOutputPath "tab/active.png")
+    foreach ($state in $buttonStates.GetEnumerator()) {
+        Extract-LegacyEntry `
+            -Entry "buttons/DefineButton2_172/$($state.Value)" `
+            -Destination (Join-Path $roleWindowOutputPath "close/$($state.Key).png")
+    }
+
     # GameInfo / chat assets.
     Extract-LegacyEntry `
         -Entry "sprites/DefineSprite_4318_somcUI_fla.ScopeButton_423_somcUI_fla.ScopeButton_423/1.png" `
@@ -253,5 +269,6 @@ Write-Host "Legacy HUD references extracted to $outputPath"
 Write-Host "ControlBar display-list assets extracted to $runtimeOutputPath"
 Write-Host "SmallMap display-list assets extracted to $smallMapOutputPath"
 Write-Host "TaskTracer display-list assets extracted to $taskTracerOutputPath"
+Write-Host "Role window display-list assets extracted to $roleWindowOutputPath"
 Write-Host "PlayerInfo display-list assets extracted to $playerInfoOutputPath"
 Write-Host "GameInfo runtime assets extracted to $gameInfoOutputPath"
