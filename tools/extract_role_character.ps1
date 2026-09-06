@@ -85,6 +85,45 @@ function Extract-Frames {
     }
 }
 
+function Write-FallbackReferenceBounds {
+    param([Parameter(Mandatory = $true)][string]$ReferencePath)
+
+    # PlayerFullInfoUIMC symbol1998 is centered on pointChildUI. These local
+    # bounds are recovered from the stable display-list reconstruction already
+    # verified in the payload: the equipment panel starts at x=-211.75 and the
+    # top controls start around y=-230. Only left/top are required by the native
+    # renderer; right/bottom are derived from the actual FFDec raster size.
+    $left = -211.75
+    $top = -230.0
+    $width = 425
+    $height = 555
+
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+        $image = [System.Drawing.Image]::FromFile($ReferencePath)
+        try {
+            $width = $image.Width
+            $height = $image.Height
+        }
+        finally {
+            $image.Dispose()
+        }
+    }
+    catch {
+        Write-Host "[Role Character] Could not read reference PNG dimensions; using payload fallback dimensions."
+    }
+
+    $right = $left + $width
+    $bottom = $top + $height
+    $boundsPath = Join-Path $outputPath "reference_bounds.tsv"
+    @(
+        "left`ttop`tright`tbottom"
+        "$left`t$top`t$right`t$bottom"
+    ) | Set-Content -Path $boundsPath -Encoding UTF8
+
+    Write-Host "Role Character fallback reference bounds written to $boundsPath"
+}
+
 $buttonStates = [ordered]@{
     "up"      = "1_up.png"
     "over"    = "2_over.png"
@@ -92,17 +131,24 @@ $buttonStates = [ordered]@{
     "hittest" = "4_hittest.png"
 }
 
+$referencePath = Join-Path $outputPath "reference.png"
+
 try {
-    # The Character window now uses the complete symbol1998 first-frame raster
-    # as its visual baseline. Resolve the linkage-suffixed FFDec folder from the
-    # actual archive instead of assuming one exact export path.
+    # Character uses the complete PlayerFullInfoUIMC first-frame raster as the
+    # visual baseline. Resolve the FFDec linkage-suffixed folder from the real
+    # archive rather than assuming a fixed folder name.
     $referenceEntry = Resolve-ArchiveEntry -Pattern '^sprites/DefineSprite_1998(?:_[^/]*)?/1\.png$'
     if (-not $referenceEntry) {
         throw "PlayerFullInfoUIMC symbol1998 reference raster was not found in Crystal Saga.rar"
     }
-    Extract-Entry -Entry $referenceEntry -Destination (Join-Path $outputPath "reference.png")
+    Extract-Entry -Entry $referenceEntry -Destination $referencePath
 
-    # Keep the individual assets as diagnostics/future interactive decomposition.
+    # Always create usable bounds before optional SWF diagnostics run. This keeps
+    # OneClick functional even if the lightweight Python parser encounters an
+    # unsupported PlaceObject feature in this unusually complex symbol.
+    Write-FallbackReferenceBounds -ReferencePath $referencePath
+
+    # Keep individual assets as diagnostics/future interactive decomposition.
     Extract-Entry -Entry "shapes/1884.png" -Destination (Join-Path $outputPath "equipment_panel.png")
     Extract-Entry `
         -Entry "sprites/DefineSprite_276_playerUI.IconBarMC_playerUI.IconBarMC/1.png" `
@@ -134,15 +180,18 @@ finally {
 
 Write-Host "Role Character payload reference and diagnostic assets extracted to $outputPath"
 
+# The SWF dump is useful for diagnostics and can replace the fallback bounds
+# with more exact values, but it must never stop the game build. The runtime has
+# already received reference.png + reference_bounds.tsv above.
 $dumpTool = Join-Path $root "tools\dump_role_character_payload.ps1"
 if (Test-Path $dumpTool) {
     try {
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File $dumpTool -Archive $Archive -SevenZip $SevenZip
         if ($LASTEXITCODE -ne 0) {
-            throw "Exact symbol1998 payload/bounds extraction failed"
+            Write-Host "[Role Character] Exact SWF payload dump failed; using the extracted reference raster and fallback bounds."
         }
     }
     catch {
-        throw "Role Character payload preparation failed: $($_.Exception.Message)"
+        Write-Host "[Role Character] Exact SWF payload dump skipped: $($_.Exception.Message)"
     }
 }
