@@ -42,6 +42,12 @@ constexpr std::array<MainButtonPlacement, 8> kMainButtons{{
     {-130.65F, -4.65F, 0.800018310546875F, 1.0000152587890625F, L"Gear Evolve"},
 }};
 
+struct NamedPayloadChild final {
+    std::string name;
+    float x = 0.0F;
+    float y = 0.0F;
+};
+
 std::vector<std::string> splitTsvLine(const std::string& line) {
     std::vector<std::string> fields;
     std::size_t begin = 0;
@@ -55,6 +61,63 @@ std::vector<std::string> splitTsvLine(const std::string& line) {
         begin = end + 1;
     }
     return fields;
+}
+
+std::string lowerAscii(std::string value) {
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return value;
+}
+
+std::vector<NamedPayloadChild> loadNamedPayloadChildren(const std::filesystem::path& runtimeRoot) {
+    std::vector<NamedPayloadChild> result;
+    std::ifstream stream(runtimeRoot / L"payload.tsv", std::ios::binary);
+    if (!stream) {
+        return result;
+    }
+
+    std::string line;
+    std::getline(stream, line); // header
+    while (std::getline(stream, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        const auto fields = splitTsvLine(line);
+        if (fields.size() < 6 || fields[1].empty()) {
+            continue;
+        }
+
+        try {
+            NamedPayloadChild child;
+            child.name = lowerAscii(fields[1]);
+            child.x = std::stof(fields[4]);
+            child.y = std::stof(fields[5]);
+            result.push_back(std::move(child));
+        }
+        catch (...) {
+        }
+    }
+    return result;
+}
+
+bool findPayloadAnchor(
+    const std::vector<NamedPayloadChild>& children,
+    const std::initializer_list<const char*> tokens,
+    float& x,
+    float& y) {
+    for (const auto& child : children) {
+        for (const char* token : tokens) {
+            if (child.name.find(token) != std::string::npos) {
+                x = child.x;
+                y = child.y;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 } // namespace
@@ -80,7 +143,7 @@ bool RoleCharacterHud::initialize(
     texts_.clear();
 
     // Equipment slot captions. Exact strings come from txt/idc.json -> RoleUI;
-    // positions are DefineEditText placements from symbol1998.
+    // positions are DefineEditText placements recovered from symbol1998.
     addText(renderer, L"Sperion", -24.0F, -138.65F, 45.0F, 8, TextHorizontalAlign::Center);
     addText(renderer, L"Neck", -24.0F, -24.65F, 45.0F, 8, TextHorizontalAlign::Center);
     addText(renderer, L"Ring", -24.0F, 13.35F, 45.0F, 8, TextHorizontalAlign::Center);
@@ -100,14 +163,15 @@ bool RoleCharacterHud::initialize(
     addText(renderer, L"Talisman", 44.5F, 29.35F, 40.0F, 8, TextHorizontalAlign::Center);
     addText(renderer, L"Artefact", -154.0F, -100.35F, 39.0F, 8, TextHorizontalAlign::Center);
 
-    // Identity/progression panel. Dynamic values are neutral UI placeholders;
-    // gameplay state is intentionally not implemented in this UI milestone.
+    // Identity/progression panel. The source screenshot exposed clipping on the
+    // far-left Title/EXP labels; keep them inside the symbol1998 content area.
+    // Values remain neutral until PlayerState is implemented.
     addText(renderer, L"Level:", 42.0F, -176.05F, 86.0F);
     addText(renderer, L"1", 129.0F, -177.05F, 80.0F);
-    addText(renderer, L"EXP:", -211.0F, -177.05F, 56.0F);
-    addText(renderer, L"0 / 0", -152.5F, -177.05F, 146.0F);
-    addText(renderer, L"Title:", -211.0F, -199.45F, 56.0F);
-    addText(renderer, L"-", -155.0F, -199.4F, 126.0F);
+    addText(renderer, L"EXP:", -202.0F, -176.0F, 48.0F);
+    addText(renderer, L"0 / 0", -152.5F, -176.0F, 146.0F);
+    addText(renderer, L"Title:", -202.0F, -198.0F, 48.0F);
+    addText(renderer, L"-", -153.0F, -198.0F, 124.0F);
     addText(renderer, L"Class:", 42.0F, -146.0F, 86.0F);
     addText(renderer, L"-", 129.0F, -146.0F, 79.0F);
     addText(renderer, L"Plane:", 42.0F, -116.0F, 86.0F);
@@ -120,10 +184,46 @@ bool RoleCharacterHud::initialize(
     addText(renderer, L"-", 129.0F, -1.0F, 79.0F);
     addText(renderer, L"PK Lvl:", 42.0F, 34.0F, 86.0F);
     addText(renderer, L"0", 129.0F, 34.0F, 41.0F);
-    addText(renderer, L"Arena Score:", -208.45F, -222.7F, 80.0F, 9);
-    addText(renderer, L"0", -128.4F, -222.7F, 77.0F, 9);
-    addText(renderer, L"Current Tier:", -50.45F, -223.6F, 80.0F, 9);
-    addText(renderer, L"-", 27.6F, -223.6F, 76.0F, 9);
+    addText(renderer, L"Arena Score:", -208.45F, -220.0F, 80.0F, 9);
+    addText(renderer, L"0", -128.4F, -220.0F, 77.0F, 9);
+    addText(renderer, L"Current Tier:", -50.45F, -220.0F, 80.0F, 9);
+    addText(renderer, L"-", 27.6F, -220.0F, 76.0F, 9);
+
+    // The reference client exposes these feature captions around dynamically
+    // populated icons. We first try to anchor each caption to the exact named
+    // display-list child emitted by payload.tsv. If a feature is created later
+    // by ActionScript and therefore has no first-frame child, the fallback only
+    // reserves its visual label; no fake icon or gameplay behavior is created.
+    const auto namedChildren = loadNamedPayloadChildren(runtimeRoot);
+    struct FeatureLabelSpec final {
+        const wchar_t* label;
+        std::initializer_list<const char*> tokens;
+        float fallbackX;
+        float fallbackY;
+        float width;
+    };
+    const FeatureLabelSpec featureLabels[] = {
+        {L"Wings", {"wing"}, 35.0F, -132.0F, 55.0F},
+        {L"Etherealization", {"ether", "ethereal"}, 68.0F, -132.0F, 72.0F},
+        {L"Cape", {"cape", "cloak"}, 42.0F, -88.0F, 56.0F},
+        {L"Legend Gem", {"legendgem", "legend_gem", "gem"}, 42.0F, -45.0F, 72.0F},
+        {L"Wunderkind", {"wunder", "wonder"}, 42.0F, -4.0F, 72.0F},
+        {L"Soul", {"soul"}, 111.0F, 66.0F, 55.0F},
+    };
+    for (const auto& spec : featureLabels) {
+        float anchorX = spec.fallbackX;
+        float anchorY = spec.fallbackY;
+        if (findPayloadAnchor(namedChildren, spec.tokens, anchorX, anchorY)) {
+            addText(renderer, spec.label, anchorX - 24.0F, anchorY + 18.0F, spec.width, 8, TextHorizontalAlign::Center);
+        }
+        else {
+            addText(renderer, spec.label, spec.fallbackX, spec.fallbackY, spec.width, 8, TextHorizontalAlign::Center);
+        }
+    }
+
+    // Visible in the live Character panel directly below Gear Evolve. Costume
+    // switching itself is gameplay/player-appearance state and remains deferred.
+    addText(renderer, L"Show Costume", -157.0F, 18.0F, 96.0F, 8, TextHorizontalAlign::Center);
 
     // Primary attributes.
     addText(renderer, L"Strength:", -215.5F, 95.0F, 71.0F);
