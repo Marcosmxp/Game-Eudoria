@@ -32,6 +32,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
     controlBar_.initialize(renderer_.sprites());
     smallMap_.initialize(renderer_.sprites());
     taskTracer_.initialize(renderer_.sprites());
+    roleWindow_.initialize(renderer_.sprites());
 
     // txt/itl.json is the exact task payload passed to TaskManager.init() by the
     // legacy ResLoadModule. During the UI-only phase there is no offline player
@@ -69,6 +70,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
             gameInfo_.update();
             smallMap_.update();
             taskTracer_.update();
+            roleWindow_.update(hudWindows_);
 
             renderer_.beginFrame();
             playerInfo_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
@@ -76,6 +78,7 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
             controlBar_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             smallMap_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             taskTracer_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
+            roleWindow_.render(renderer_.sprites(), renderer_.width(), renderer_.height(), hudWindows_);
             legacyHudReference_.render(renderer_.sprites(), renderer_.width(), renderer_.height());
             renderer_.endFrame();
         }
@@ -160,6 +163,9 @@ LRESULT Win32Application::handleMessage(
     case WM_MOUSEMOVE: {
         const float x = static_cast<float>(GET_X_LPARAM(lParam));
         const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        if (roleWindow_.onMouseMove(x, y, renderer_.width(), renderer_.height(), hudWindows_)) {
+            return 0;
+        }
         gameInfo_.onMouseMove(x, y, renderer_.width(), renderer_.height());
         taskTracer_.onMouseMove(x, y, renderer_.width(), renderer_.height());
         controlBar_.onMouseMove(x, y, renderer_.width(), renderer_.height());
@@ -170,6 +176,9 @@ LRESULT Win32Application::handleMessage(
         SetCapture(window);
         const float x = static_cast<float>(GET_X_LPARAM(lParam));
         const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        if (roleWindow_.onMouseDown(x, y, renderer_.width(), renderer_.height(), hudWindows_)) {
+            return 0;
+        }
         if (gameInfo_.onMouseDown(x, y, renderer_.width(), renderer_.height())) {
             return 0;
         }
@@ -186,6 +195,9 @@ LRESULT Win32Application::handleMessage(
         }
         const float x = static_cast<float>(GET_X_LPARAM(lParam));
         const float y = static_cast<float>(GET_Y_LPARAM(lParam));
+        if (roleWindow_.onMouseUp(x, y, renderer_.width(), renderer_.height(), hudWindows_)) {
+            return 0;
+        }
         if (gameInfo_.onMouseUp(x, y, renderer_.width(), renderer_.height())) {
             return 0;
         }
