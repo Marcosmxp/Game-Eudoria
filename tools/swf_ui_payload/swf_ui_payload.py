@@ -61,7 +61,7 @@ class BitReader:
         return self.bit_pos // 8
 
 
-@dataclass(slots=True)
+@dataclass
 class Tag:
     code: int
     start: int
@@ -81,9 +81,9 @@ class Swf:
         offset += 2
         self.tag_offset = offset
         self.tags = list(self._iter_tags(offset, len(self.data)))
-        self.definitions: dict[int, Tag] = {}
-        self.exports: dict[str, int] = {}
-        self.symbol_classes: dict[str, int] = {}
+        self.definitions = {}
+        self.exports = {}
+        self.symbol_classes = {}
         self._index()
 
     @staticmethod
@@ -94,16 +94,16 @@ class Swf:
             return raw
         if signature == b"CWS":
             return b"FWS" + raw[3:8] + zlib.decompress(raw[8:])
-        raise ValueError(f"Unsupported SWF signature: {signature!r}. FWS/CWS are supported.")
+        raise ValueError("Unsupported SWF signature: %r. FWS/CWS are supported." % signature)
 
-    def _read_rect(self, offset: int) -> tuple[list[int], int]:
+    def _read_rect(self, offset: int):
         reader = BitReader(self.data, offset)
         bits = reader.read_bits(5)
         values = [reader.read_sbits(bits) for _ in range(4)]
         reader.align()
         return values, reader.offset
 
-    def _read_matrix(self, offset: int) -> tuple[dict[str, float], int]:
+    def _read_matrix(self, offset: int):
         reader = BitReader(self.data, offset)
         scale_x = scale_y = 1.0
         rotate_0 = rotate_1 = 0.0
@@ -143,7 +143,7 @@ class Swf:
         return reader.offset
 
     @staticmethod
-    def _read_cstring(data: bytes, offset: int, end: int) -> tuple[str, int]:
+    def _read_cstring(data: bytes, offset: int, end: int):
         zero = data.find(b"\0", offset, end)
         if zero < 0:
             return "", end
@@ -193,8 +193,6 @@ class Swf:
                     character_id = struct.unpack_from("<H", self.data, offset)[0]
                     offset += 2
                     name, offset = self._read_cstring(self.data, offset, tag.end)
-                    # Character id 0 is the document class; it is not a display
-                    # object definition and therefore cannot be used as a UI root.
                     if character_id:
                         self.symbol_classes[name] = character_id
 
@@ -243,16 +241,16 @@ class Swf:
             result["name"], offset = self._read_cstring(self.data, offset, tag.end)
         if flags1 & 0x40:
             offset += 2
-        if flags2 & 0x20:
+        if flags2 & 0x20 and offset < tag.end:
             result["visible"] = bool(self.data[offset])
         return result
 
-    def first_frame(self, sprite_id: int) -> list[dict]:
+    def first_frame(self, sprite_id: int):
         definition = self.definitions[sprite_id]
         if definition.code != TAG_DEFINE_SPRITE:
-            raise ValueError(f"Character {sprite_id} is not a DefineSprite")
+            raise ValueError("Character %d is not a DefineSprite" % sprite_id)
         offset = definition.start + 4
-        display_list: dict[int, dict] = {}
+        display_list = {}
         for tag in self._iter_tags(offset, definition.end):
             if tag.code == TAG_PLACE_OBJECT2:
                 item = self._parse_place2(tag)
@@ -291,25 +289,20 @@ class Swf:
             7: "button", 34: "button2", 39: "sprite",
             11: "text", 33: "text2", 37: "editText",
             46: "morphShape", 84: "morphShape2",
-        }.get(definition.code, f"tag{definition.code}")
+        }.get(definition.code, "tag%d" % definition.code)
 
     def resolve_symbol(self, symbol_name: str) -> int:
         if symbol_name in self.exports:
             return self.exports[symbol_name]
         if symbol_name in self.symbol_classes:
             return self.symbol_classes[symbol_name]
-
-        # FFDec names unexported display objects as symbol<characterId>. Those
-        # synthetic names are extremely useful in this reconstruction even when
-        # the SWF has no ExportAssets/SymbolClass record for the object.
         if symbol_name.startswith("symbol"):
             suffix = symbol_name[6:]
             if suffix.isdigit():
                 character_id = int(suffix)
                 if character_id in self.definitions:
                     return character_id
-
-        raise KeyError(f"SWF export/symbol not found: {symbol_name}")
+        raise KeyError("SWF export/symbol not found: %s" % symbol_name)
 
     def sprite_payload(self, export_name: str) -> dict:
         sprite_id = self.resolve_symbol(export_name)
@@ -367,7 +360,7 @@ def main() -> int:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Wrote {args.output}")
+    print("Wrote %s" % args.output)
     return 0
 
 
