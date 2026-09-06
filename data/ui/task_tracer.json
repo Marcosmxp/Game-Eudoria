@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "taskTracer",
   "legacyClass": "playerUI.TaskTracerUIMC",
   "legacyExport": "symbol4135",
@@ -7,66 +7,147 @@
   "taskEntryExport": "symbol5665",
   "source": {
     "layout": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerUI.as",
+    "uimc": "Crystal Saga.rar/scripts/playerUI/TaskTracerUIMC.as",
     "taskEntryBehavior": "Crystal Saga.rar/scripts/com/sunweb/game/rpg/playerUI/TaskTracerBoxUI.as",
-    "skin": "Crystal Saga.rar/sprites/DefineSprite_4135_playerUI.TaskTracerUIMC_playerUI.TaskTracerUIMC/1.png",
-    "taskEntrySkin": "Crystal Saga.rar/sprites/DefineSprite_5665_playerUI.TaskTracerBoxUIMC_playerUI.TaskTracerBoxUIMC/1.png"
+    "taskEntryUimc": "Crystal Saga.rar/scripts/playerUI/TaskTracerBoxUIMC.as",
+    "localization": "txt.rar/txt/idc.json -> TaskTracerUI",
+    "scrollbar": "Crystal Saga.rar/scripts/fl/controls/ScrollBar.as"
+  },
+  "localization": {
+    "txtTitle": "Quest Tracking",
+    "txtClickShowContent": "More Info",
+    "cmdHaveTask": "Current",
+    "cmdCanReceiveTask": "Available",
+    "taskFinish": "Turn In To: _%0_"
   },
   "defaultRoot": {
     "x": 960,
     "y": 230,
-    "anchor": "top-right"
+    "anchor": "top-right",
+    "derivation": "TaskTracerUI.onResize: x = stageWidth - titleBox.width; y = 230"
   },
+  "displayList": [
+    {"depth":1,"name":"titleBox","characterId":304,"x":120,"y":-18,"scaleX":4.9993133544921875,"scaleY":0.750030517578125},
+    {"depth":11,"name":"txtCanReceiveTask","characterId":4132,"x":2,"y":2.05},
+    {"depth":12,"name":"availableScroll","characterId":210,"x":224,"y":0,"scaleY":1.779998779296875},
+    {"depth":51,"name":"txtDeyTitle","characterId":4133,"x":42,"y":-33},
+    {"depth":52,"name":"pointTask","characterId":181,"x":0,"y":0},
+    {"depth":54,"name":"scrollTask","characterId":210,"x":224,"y":0,"scaleY":1.800018310546875},
+    {"depth":93,"name":"collapse","characterId":4134,"x":6,"y":-23},
+    {"depth":94,"name":"cmdHaveTask","characterId":436,"x":32.1,"y":-19,"scaleX":1.831756591796875,"scaleY":1.031524658203125},
+    {"depth":97,"name":"cmdCanReceiveTask","characterId":436,"x":122,"y":-19,"scaleX":1.831756591796875,"scaleY":1.031524658203125}
+  ],
   "payloadGeometry": {
-    "pointTask": { "x": 0, "y": 0 },
-    "scrollTask": { "x": 224, "y": 0 },
-    "contentViewport": { "width": 224, "height": 180 },
-    "cmdHaveTask": { "x": 32.1, "y": -19 },
-    "cmdCanReceiveTask": { "x": 122, "y": -19 },
+    "titleBox": {
+      "characterId":304,
+      "shapeCharacterId":303,
+      "shapeBounds":{"left":-24,"right":24,"top":-24,"bottom":24},
+      "resolvedBounds":{"left":0,"top":-36,"width":240,"height":36}
+    },
+    "title": {
+      "characterId":4133,
+      "placement":{"x":42,"y":-33},
+      "bounds":{"left":-2,"right":161,"top":-2,"bottom":15.65},
+      "fontPx":12,
+      "color":"#FFFFFF",
+      "align":"center"
+    },
+    "collapse": {
+      "characterId":4134,
+      "placement":{"x":6,"y":-23},
+      "bounds":{"left":-2,"right":14,"top":-2,"bottom":15.65},
+      "expandedGlyph":"━",
+      "collapsedGlyph":"╋"
+    },
+    "pointTask": {"x":0,"y":0},
+    "contentViewport": {"width":224,"height":180},
+    "scrollTask": {
+      "x":224,
+      "y":0,
+      "width":15,
+      "height":180,
+      "arrowHeight":14,
+      "trackY":14,
+      "trackHeight":152,
+      "minimumThumbHeight":13,
+      "lineScrollSize":1,
+      "skins": {
+        "track":"shape191 / ScrollTrack_skin",
+        "up":"shape194 / ScrollArrowUp_upSkin",
+        "down":"shape196 / ScrollArrowDown_upSkin",
+        "thumb":"shape198 / ScrollThumb_upSkin",
+        "thumbIcon":"shape208 / ScrollBar_thumbIcon"
+      }
+    },
+    "cmdHaveTask": {"characterId":436,"x":32.1,"y":-19,"scaleX":1.831756591796875,"scaleY":1.031524658203125},
+    "cmdCanReceiveTask": {"characterId":436,"x":122,"y":-19,"scaleX":1.831756591796875,"scaleY":1.031524658203125},
+    "tableButton": {
+      "normalShape":432,
+      "activeShape":435,
+      "labelCharacterId":433,
+      "labelFontPx":10,
+      "labelColor":"#FFFFFF"
+    },
     "taskEntry": {
-      "txtTaskName": { "x": 5, "y": 5, "width": 168, "height": 29, "fontPx": 10, "color": "#FFCC00" },
-      "txtTaskCondition": { "x": 5, "y": 33.7, "width": 220, "fontPx": 10, "color": "#FFFFFF" },
-      "txtViewTask": { "x": 166, "y": 5, "width": 59, "height": 27, "fontPx": 10, "color": "#CCFF00" }
+      "separator":{"characterId":5661,"x":2.5,"y":-0.5,"width":223,"height":1},
+      "txtTaskName":{"characterId":5662,"placement":{"x":5,"y":5},"bounds":{"left":-2,"right":166,"top":-2,"bottom":26.3},"fontPx":10,"color":"#FFCC00"},
+      "txtTaskCondition":{"characterId":5663,"placement":{"x":5,"y":33.7},"bounds":{"left":-2,"right":220,"top":-2,"bottom":92.3},"fontPx":10,"color":"#FFFFFF"},
+      "txtViewTask":{"characterId":5664,"placement":{"x":166,"y":5},"bounds":{"left":-2,"right":59,"top":-2,"bottom":26.3},"fontPx":10,"color":"#CCFF00","align":"right"}
+    },
+    "availableText": {
+      "characterId":4132,
+      "placement":{"x":2,"y":2.05},
+      "bounds":{"left":-2,"right":222,"top":-2,"bottom":176},
+      "fontPx":12,
+      "color":"#FFFFFF",
+      "html":true,
+      "multiline":true
     }
   },
   "behavior": {
-    "draggableBy": "titleBox",
-    "collapseControl": "§_-ny§",
-    "collapseRemoves": ["pointTask", "scrollTask"],
-    "refreshIntervalMs": 2000,
-    "taskSort": "taskKind numeric ascending",
-    "activeTab": "cmdHaveTask",
-    "availableTab": "cmdCanReceiveTask",
-    "activeTaskNameClick": "toggle txtTaskCondition",
-    "viewTaskClick": "open quest window for task id",
-    "scroll": "contentHeight - viewportHeight"
+    "draggableBy":"titleBox",
+    "collapseControl":"collapse",
+    "collapseRemoves":["pointTask","scrollTask"],
+    "refreshIntervalMs":2000,
+    "taskSort":"taskKind numeric ascending",
+    "activeTab":"cmdHaveTask.gotoAndStop(2)",
+    "inactiveTab":"gotoAndStop(1)",
+    "activeTaskNameClick":"toggle txtTaskCondition child",
+    "viewTaskClick":"open quest window for task id",
+    "taskNamePrefix":{"expanded":"－","collapsed":"＋"},
+    "taskConditionHeight":"textHeight + 5",
+    "scroll":"maxScrollPosition = contentHeight - scrollTask.height",
+    "scrollThumb":"max(13, pageSize / (maxScrollPosition + pageSize) * track.height)"
   },
   "runtimeMilestone": {
-    "part": 2,
-    "implemented": [
-      "payload chrome",
-      "top-right default placement",
-      "dragging by title bar",
-      "collapse and expand",
-      "reset to original position on viewport resize",
-      "native task text rendering",
-      "numeric taskKind sorting",
+    "part":3,
+    "implemented":[
+      "symbol4135 composite removed from runtime",
+      "titleBox rebuilt from character304/shape303",
+      "payload title and collapse glyph geometry",
+      "Current and Available TableButton states from shapes 432/435",
+      "localization strings recovered from txt/idc.json",
+      "TaskTracerBox separator and exact text-field bounds",
+      "native UIScrollBar skins and thumb sizing",
+      "scroll arrow, page-track, wheel and thumb-drag interaction",
+      "top-right resize placement",
+      "dragging by titleBox",
       "2000ms refresh cadence",
-      "active and available modes",
-      "mouse wheel scrolling",
+      "numeric taskKind sorting",
       "task entry expand/collapse",
-      "View Task opens the local Quests window state",
-      "dynamic task entry height",
-      "content clipping to the legacy viewport"
+      "More Info opens local Quests window state",
+      "content clipping"
     ],
-    "temporary": [
-      "pre-alpha fixture task data in Win32Application until the offline TaskManager is connected",
-      "English View Task label until the legacy diversity/localization catalog is imported"
+    "removed":[
+      "pre-alpha Eudoria reconstruction fixture quests",
+      "invented View Task label",
+      "full task_tracer.reference.png runtime composite",
+      "large white FFDec UIScrollBar component placeholder"
     ],
-    "next": [
-      "offline TaskManager data binding",
-      "legacy localization catalog",
-      "NPC/map link actions inside task condition text",
-      "native scrollbar thumb synchronized with scrollPosition"
+    "next":[
+      "bind tracked/available tasks to offline TaskManager using txt task payload",
+      "decode HTML condition links and NPC/map actions",
+      "load localization catalog generically instead of the current recovered TaskTracer strings"
     ]
   }
 }
