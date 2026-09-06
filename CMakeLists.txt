@@ -17,6 +17,7 @@ add_executable(Eudoria WIN32
     src/game/ui/GameInfoHud.cpp
     src/game/ui/LegacyHudReference.cpp
     src/game/ui/PlayerInfoHud.cpp
+    src/game/ui/RoleWindowHud.cpp
     src/game/ui/SmallMapHud.cpp
     src/game/ui/TaskTracerHud.cpp
 )
