@@ -1,11 +1,8 @@
 #pragma once
 
 #include "engine/render/SpriteRenderer.h"
-#include "engine/render/TextRasterizer.h"
 
-#include <cstdint>
 #include <filesystem>
-#include <vector>
 
 namespace eudoria::game::ui {
 
@@ -18,45 +15,19 @@ public:
     void render(SpriteRenderer& renderer, float rootX, float rootY) const;
 
 private:
-    enum class LayerKind : std::uint8_t {
-        Sprite,
-        Text,
-    };
+    bool loadReferenceBounds(const std::filesystem::path& runtimeRoot) noexcept;
 
-    struct LayerItem final {
-        LayerKind kind = LayerKind::Sprite;
-        int depth = 0;
-        float x = 0.0F;
-        float y = 0.0F;
-        float width = 0.0F;
-        float height = 0.0F;
-        SpriteTexture sprite;
-        TextTextureResult text;
-    };
-
-    bool loadVisualManifest(
-        SpriteRenderer& renderer,
-        const std::filesystem::path& runtimeRoot);
-
-    bool loadTextManifest(
-        SpriteRenderer& renderer,
-        const std::filesystem::path& runtimeRoot);
-
-    void addSyntheticText(
-        SpriteRenderer& renderer,
-        int depth,
-        const wchar_t* text,
-        float x,
-        float y,
-        float width,
-        float height,
-        std::uint32_t fontSize,
-        TextHorizontalAlign align = TextHorizontalAlign::Center,
-        std::uint8_t red = 255,
-        std::uint8_t green = 255,
-        std::uint8_t blue = 255);
-
-    std::vector<LayerItem> layers_;
+    // During the UI fidelity pass the full first-frame raster of
+    // PlayerFullInfoUIMC/symbol1998 is the visual source of truth. It comes
+    // directly from Crystal Saga.rar and therefore preserves every panel,
+    // equipment slot, button chrome, separator, icon placeholder and ornament
+    // exactly as Flash rendered it. Dynamic player data is intentionally kept
+    // out until the static UI matches the original reference.
+    SpriteTexture reference_;
+    float referenceX_ = 0.0F;
+    float referenceY_ = 0.0F;
+    float referenceWidth_ = 0.0F;
+    float referenceHeight_ = 0.0F;
 };
 
 } // namespace eudoria::game::ui
