@@ -1,7 +1,5 @@
 #include "game/ui/RoleWindowHud.h"
 
-#include <algorithm>
-
 namespace eudoria::game::ui {
 namespace {
 
@@ -33,6 +31,7 @@ bool RoleWindowHud::initialize(
     loaded = renderer.loadTexture((runtimeRoot / L"close" / L"up.png").wstring(), close_.up) && loaded;
     loaded = renderer.loadTexture((runtimeRoot / L"close" / L"over.png").wstring(), close_.over) && loaded;
     loaded = renderer.loadTexture((runtimeRoot / L"close" / L"down.png").wstring(), close_.down) && loaded;
+    loaded = character_.initialize(renderer, runtimeRoot / L"character") && loaded;
 
     // Strings recovered from txt/idc.json -> RoleUI. They stay here only as
     // UI localization values; gameplay data is not introduced in this layer.
@@ -107,6 +106,7 @@ void RoleWindowHud::render(
         return;
     }
 
+    // bgBox is depth 1 in PlayerBoxUIMC.
     if (background_.valid()) {
         renderer.draw(
             background_,
@@ -115,6 +115,20 @@ void RoleWindowHud::render(
             kBackgroundWidth * kBackgroundScaleX,
             kBackgroundHeight * kBackgroundScaleY);
     }
+
+    // pointChildUI is depth 11. Render the selected child before the tabs/title,
+    // exactly matching the PlayerBoxUIMC display order.
+    if (selectedTab_ == Tab::Character) {
+        character_.render(
+            renderer,
+            rootX_ + kChildPointX,
+            rootY_ + kChildPointY);
+    }
+
+    // Tabs begin at depth 13, then titleBox/text and close button.
+    drawTab(renderer, Tab::Character, characterLabel_);
+    drawTab(renderer, Tab::DivineSoul, divineSoulLabel_);
+    drawTab(renderer, Tab::Familiar, familiarLabel_);
 
     if (titleBox_.valid()) {
         renderer.draw(
@@ -133,10 +147,6 @@ void RoleWindowHud::render(
             kTitleTextWidth,
             static_cast<float>(titleLabel_.texture.height));
     }
-
-    drawTab(renderer, Tab::Character, characterLabel_);
-    drawTab(renderer, Tab::DivineSoul, divineSoulLabel_);
-    drawTab(renderer, Tab::Familiar, familiarLabel_);
 
     const SpriteTexture* closeTexture = closeState();
     if (closeTexture && closeTexture->valid()) {
@@ -282,19 +292,6 @@ float RoleWindowHud::tabX(const Tab tab) noexcept {
     case Tab::Familiar: return kFamiliarTabX;
     }
     return kCharacterTabX;
-}
-
-const TextTextureResult& RoleWindowHud::tabLabel(
-    const Tab tab,
-    const TextTextureResult& character,
-    const TextTextureResult& divineSoul,
-    const TextTextureResult& familiar) noexcept {
-    switch (tab) {
-    case Tab::Character: return character;
-    case Tab::DivineSoul: return divineSoul;
-    case Tab::Familiar: return familiar;
-    }
-    return character;
 }
 
 RoleWindowHud::PressedAction RoleWindowHud::hitAction(
