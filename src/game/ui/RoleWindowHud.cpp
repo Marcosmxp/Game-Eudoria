@@ -17,6 +17,21 @@ TextTextureStyle labelStyle(
     return style;
 }
 
+TextTextureStyle titleStyle() {
+    // DefineEditText 4929 in PlayerBoxUIMC: Arial/SimSun equivalent, size 14,
+    // black, centered. The live controller replaces the initial caption with
+    // the current player name.
+    TextTextureStyle style;
+    style.fontFamily = L"Arial";
+    style.fontPixelHeight = 14;
+    style.red = 0;
+    style.green = 0;
+    style.blue = 0;
+    style.align = TextHorizontalAlign::Center;
+    style.wordWrap = false;
+    return style;
+}
+
 } // namespace
 
 bool RoleWindowHud::initialize(
@@ -33,16 +48,12 @@ bool RoleWindowHud::initialize(
     loaded = renderer.loadTexture((runtimeRoot / L"close" / L"down.png").wstring(), close_.down) && loaded;
     loaded = character_.initialize(renderer, runtimeRoot / L"character") && loaded;
 
-    // PlayerBoxUIMC's title field is populated with the current player name by
-    // the live controller. During the UI-only milestone PlayerInfo already uses
-    // Eudoria as the neutral local player name, so the Role header mirrors it
-    // instead of incorrectly hard-coding the word "Character".
     loaded = createTextTexture(
         renderer,
         L"Eudoria",
         static_cast<std::uint32_t>(kTitleTextWidth),
         static_cast<std::uint32_t>(kTitleTextHeight),
-        labelStyle(12),
+        titleStyle(),
         titleLabel_) && loaded;
 
     loaded = createTextTexture(
@@ -82,8 +93,6 @@ bool RoleWindowHud::initialize(
 void RoleWindowHud::update(const HudWindowManager& windows) noexcept {
     const bool visible = windows.visible(HudWindow::Character);
     if (visible && !wasVisible_) {
-        // PlayerBoxUI.showUI() closes every child panel and always re-opens the
-        // Character tab first.
         selectedTab_ = Tab::Character;
         pressed_ = PressedAction::None;
         hovered_ = PressedAction::None;
@@ -112,7 +121,6 @@ void RoleWindowHud::render(
         return;
     }
 
-    // bgBox is depth 1 in PlayerBoxUIMC.
     if (background_.valid()) {
         renderer.draw(
             background_,
@@ -122,8 +130,6 @@ void RoleWindowHud::render(
             kBackgroundHeight * kBackgroundScaleY);
     }
 
-    // pointChildUI is depth 11. Render the selected child before the tabs/title,
-    // exactly matching the PlayerBoxUIMC display order.
     if (selectedTab_ == Tab::Character) {
         character_.render(
             renderer,
@@ -131,7 +137,6 @@ void RoleWindowHud::render(
             rootY_ + kChildPointY);
     }
 
-    // Tabs begin at depth 13, then titleBox/text and close button.
     drawTab(renderer, Tab::Character, characterLabel_);
     drawTab(renderer, Tab::DivineSoul, divineSoulLabel_);
     if (kFamiliarTabVisible) {
