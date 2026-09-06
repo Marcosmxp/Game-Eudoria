@@ -7,6 +7,7 @@ param(
     [string]$PlayerInfoOutput = "legacy_assets/runtime/ui/player_info",
     [string]$GameInfoOutput = "legacy_assets/runtime/ui/game_info",
     [string]$SmallMapOutput = "legacy_assets/runtime/ui/small_map",
+    [string]$TaskTracerOutput = "legacy_assets/runtime/ui/task_tracer",
     [string]$SevenZip = "7z"
 )
 
@@ -25,9 +26,10 @@ $runtimeOutputPath = Join-Path $root $RuntimeOutput
 $playerInfoOutputPath = Join-Path $root $PlayerInfoOutput
 $gameInfoOutputPath = Join-Path $root $GameInfoOutput
 $smallMapOutputPath = Join-Path $root $SmallMapOutput
+$taskTracerOutputPath = Join-Path $root $TaskTracerOutput
 $tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("eudoria-ui-" + [guid]::NewGuid().ToString("N"))
 
-@($outputPath, $runtimeOutputPath, $playerInfoOutputPath, $gameInfoOutputPath, $smallMapOutputPath, $tempPath) |
+@($outputPath, $runtimeOutputPath, $playerInfoOutputPath, $gameInfoOutputPath, $smallMapOutputPath, $taskTracerOutputPath, $tempPath) |
     ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
 
 function Extract-LegacyEntry {
@@ -175,6 +177,21 @@ try {
         }
     }
 
+    # TaskTracer: rebuild symbol4135 and symbol5665 from their real children.
+    # The old task_tracer.reference.png stays F2-only. Using it directly caused
+    # the Flash component placeholder scrollbar to appear as a large white bar.
+    Extract-LegacyEntry -Entry "shapes/303.png" -Destination (Join-Path $taskTracerOutputPath "title_box.png")
+    Extract-LegacyEntry -Entry "shapes/432.png" -Destination (Join-Path $taskTracerOutputPath "tab/normal.png")
+    Extract-LegacyEntry -Entry "shapes/435.png" -Destination (Join-Path $taskTracerOutputPath "tab/active.png")
+    Extract-LegacyEntry -Entry "shapes/5661.png" -Destination (Join-Path $taskTracerOutputPath "task_separator.png")
+
+    # Native UIScrollBar skins used by fl.controls.ScrollBar.defaultStyles.
+    Extract-LegacyEntry -Entry "shapes/191.png" -Destination (Join-Path $taskTracerOutputPath "scroll/track.png")
+    Extract-LegacyEntry -Entry "shapes/194.png" -Destination (Join-Path $taskTracerOutputPath "scroll/up.png")
+    Extract-LegacyEntry -Entry "shapes/196.png" -Destination (Join-Path $taskTracerOutputPath "scroll/down.png")
+    Extract-LegacyEntry -Entry "shapes/198.png" -Destination (Join-Path $taskTracerOutputPath "scroll/thumb.png")
+    Extract-LegacyEntry -Entry "shapes/208.png" -Destination (Join-Path $taskTracerOutputPath "scroll/thumb_icon.png")
+
     # GameInfo / chat assets.
     Extract-LegacyEntry `
         -Entry "sprites/DefineSprite_4318_somcUI_fla.ScopeButton_423_somcUI_fla.ScopeButton_423/1.png" `
@@ -235,5 +252,6 @@ finally {
 Write-Host "Legacy HUD references extracted to $outputPath"
 Write-Host "ControlBar display-list assets extracted to $runtimeOutputPath"
 Write-Host "SmallMap display-list assets extracted to $smallMapOutputPath"
+Write-Host "TaskTracer display-list assets extracted to $taskTracerOutputPath"
 Write-Host "PlayerInfo display-list assets extracted to $playerInfoOutputPath"
 Write-Host "GameInfo runtime assets extracted to $gameInfoOutputPath"
