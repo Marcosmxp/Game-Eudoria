@@ -137,7 +137,7 @@ try {
         $characterId = [int]$row.characterId
         $entry = Resolve-ArchiveEntry -Type ([string]$row.characterType) -CharacterId $characterId -Frame ([string]$row.sourceFrame)
         if (-not $entry) {
-            $failed += "$($row.depth):$($row.name):$characterId:$($row.characterType)"
+            $failed += "$($row.depth):$($row.name):${characterId}:$($row.characterType)"
             continue
         }
 
@@ -146,7 +146,7 @@ try {
             $copied++
         }
         else {
-            $failed += "$($row.depth):$($row.name):$characterId:$($row.characterType)"
+            $failed += "$($row.depth):$($row.name):${characterId}:$($row.characterType)"
         }
     }
 
