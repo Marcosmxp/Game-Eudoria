@@ -33,9 +33,6 @@ private:
         TextTextureResult texture;
     };
 
-    // Static first-frame PlayerFullInfoUIMC children that are discovered from
-    // assets.swf at extraction time. These are not guessed from screenshots:
-    // auto_manifest.tsv is generated from symbol1998 transforms and bounds.
     struct AutoVisual final {
         int depth = 0;
         float x = 0.0F;
@@ -43,6 +40,14 @@ private:
         float width = 0.0F;
         float height = 0.0F;
         SpriteTexture texture;
+    };
+
+    struct ReferenceBounds final {
+        float left = 0.0F;
+        float top = 0.0F;
+        float right = 0.0F;
+        float bottom = 0.0F;
+        bool valid = false;
     };
 
     static constexpr std::array<TexturePlacement, 18> kEquipmentSlots{{
@@ -98,6 +103,8 @@ private:
         SpriteRenderer& renderer,
         const std::filesystem::path& runtimeRoot);
 
+    void loadReferenceBounds(const std::filesystem::path& runtimeRoot);
+
     void drawSpriteAtBounds(
         SpriteRenderer& renderer,
         const SpriteTexture& texture,
@@ -108,6 +115,9 @@ private:
         float boundsTop,
         float boundsWidth,
         float boundsHeight) const;
+
+    SpriteTexture reference_;
+    ReferenceBounds referenceBounds_;
 
     SpriteTexture equipmentPanel_;
     SpriteTexture equipmentSlot_;
