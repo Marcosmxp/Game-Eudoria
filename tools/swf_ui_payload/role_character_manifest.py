@@ -93,9 +93,9 @@ class BoundsResolver:
                     break
                 child_id = struct.unpack_from("<H", data, offset)[0]
                 offset += 2
-                offset += 2  # place depth
+                offset += 2
                 matrix, offset = self.swf._read_matrix(offset)
-                if flags & 0x01:  # StateUp
+                if flags & 0x01:
                     child_bounds = self.resolve(child_id)
                     if child_bounds is not None:
                         result = union(result, transform_bounds(child_bounds, matrix))
@@ -103,8 +103,8 @@ class BoundsResolver:
 
         if tag.code == TAG_DEFINE_BUTTON2:
             offset = tag.start + 2
-            offset += 1  # TrackAsMenu / reserved flags
-            offset += 2  # ActionOffset
+            offset += 1
+            offset += 2
             while offset < tag.end:
                 flags = data[offset]
                 offset += 1
@@ -112,21 +112,18 @@ class BoundsResolver:
                     break
                 child_id = struct.unpack_from("<H", data, offset)[0]
                 offset += 2
-                offset += 2  # place depth
+                offset += 2
                 matrix, offset = self.swf._read_matrix(offset)
                 offset = self.swf._skip_cxform_alpha(offset)
 
-                if flags & 0x01:  # StateUp
+                if flags & 0x01:
                     child_bounds = self.resolve(child_id)
                     if child_bounds is not None:
                         result = union(result, transform_bounds(child_bounds, matrix))
 
-                # Button records in this legacy HUD normally do not use filters.
-                # A filter list is variable-length; stop after preserving any up
-                # bounds already recovered rather than desynchronizing the parser.
-                if flags & 0x10:  # HasFilterList
+                if flags & 0x10:
                     return result
-                if flags & 0x20:  # HasBlendMode
+                if flags & 0x20:
                     offset += 1
             return result
 
@@ -203,9 +200,7 @@ def main() -> int:
     args = parser.parse_args()
 
     swf = Swf(args.swf)
-    sprite_id = swf.exports.get("symbol1998")
-    if sprite_id is None:
-        raise KeyError("SWF export not found: symbol1998")
+    sprite_id = swf.resolve_symbol("symbol1998")
 
     excluded = set(args.exclude_ids)
     resolver = BoundsResolver(swf)
@@ -233,8 +228,6 @@ def main() -> int:
         transform = child.get("transform", {})
         rect = signed_draw_rect(bounds, transform)
         if rect is None:
-            # Current SpriteRenderer has no arbitrary rotation path. Keep rotated
-            # objects out instead of rendering them incorrectly.
             continue
 
         draw_x, draw_y, draw_width, draw_height = rect
