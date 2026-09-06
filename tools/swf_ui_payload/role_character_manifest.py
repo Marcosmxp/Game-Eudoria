@@ -6,6 +6,7 @@ import csv
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
 from swf_ui_payload import (
     Swf,
@@ -35,7 +36,7 @@ class Bounds:
         return self.bottom - self.top
 
 
-def union(a: Bounds | None, b: Bounds | None) -> Bounds | None:
+def union(a: Optional[Bounds], b: Optional[Bounds]) -> Optional[Bounds]:
     if a is None:
         return b
     if b is None:
@@ -76,13 +77,13 @@ def transform_bounds(bounds: Bounds, transform: dict) -> Bounds:
 class BoundsResolver:
     def __init__(self, swf: Swf):
         self.swf = swf
-        self.cache: dict[int, Bounds | None] = {}
-        self.active: set[int] = set()
+        self.cache: Dict[int, Optional[Bounds]] = {}
+        self.active: Set[int] = set()
 
-    def _button_up_bounds(self, character_id: int) -> Bounds | None:
+    def _button_up_bounds(self, character_id: int) -> Optional[Bounds]:
         tag = self.swf.definitions[character_id]
         data = self.swf.data
-        result: Bounds | None = None
+        result = None  # type: Optional[Bounds]
 
         if tag.code == TAG_DEFINE_BUTTON:
             offset = tag.start + 2
@@ -121,9 +122,6 @@ class BoundsResolver:
                     if child_bounds is not None:
                         result = union(result, transform_bounds(child_bounds, matrix))
 
-                # Legacy Character buttons do not need filter geometry for their
-                # up-state raster. Stop at a filter list instead of desynchronizing
-                # the button record parser.
                 if flags & 0x10:
                     return result
                 if flags & 0x20:
@@ -132,7 +130,7 @@ class BoundsResolver:
 
         return None
 
-    def resolve(self, character_id: int) -> Bounds | None:
+    def resolve(self, character_id: int) -> Optional[Bounds]:
         if character_id in self.cache:
             return self.cache[character_id]
         if character_id in self.active:
@@ -145,7 +143,7 @@ class BoundsResolver:
 
         self.active.add(character_id)
         try:
-            result: Bounds | None = None
+            result = None  # type: Optional[Bounds]
             if tag.code in TAG_DEFINE_SHAPE or tag.code in TAG_DEFINE_TEXT or tag.code == TAG_DEFINE_EDIT_TEXT:
                 rect, _ = self.swf._read_rect(tag.start + 2)
                 result = Bounds(rect[0] / 20.0, rect[2] / 20.0, rect[1] / 20.0, rect[3] / 20.0)
@@ -171,7 +169,7 @@ class BoundsResolver:
             self.active.remove(character_id)
 
 
-def signed_draw_rect(bounds: Bounds, transform: dict) -> tuple[float, float, float, float] | None:
+def signed_draw_rect(bounds: Bounds, transform: dict) -> Optional[Tuple[float, float, float, float]]:
     r0 = float(transform.get("rotateSkew0", 0.0))
     r1 = float(transform.get("rotateSkew1", 0.0))
     if abs(r0) > 1e-6 or abs(r1) > 1e-6:
@@ -189,10 +187,10 @@ def signed_draw_rect(bounds: Bounds, transform: dict) -> tuple[float, float, flo
     )
 
 
-def read_edit_text(swf: Swf, character_id: int) -> dict[str, object]:
+def read_edit_text(swf: Swf, character_id: int) -> Dict[str, object]:
     tag = swf.definitions[character_id]
     if tag.code != TAG_DEFINE_EDIT_TEXT:
-        raise ValueError(f"Character {character_id} is not DefineEditText")
+        raise ValueError("Character %d is not DefineEditText" % character_id)
 
     offset = tag.start + 2
     rect, offset = swf._read_rect(offset)
@@ -274,13 +272,14 @@ def main() -> int:
         args.root_bounds_output.parent.mkdir(parents=True, exist_ok=True)
         args.root_bounds_output.write_text(
             "left\ttop\tright\tbottom\twidth\theight\n"
-            f"{root_bounds.left:.6f}\t{root_bounds.top:.6f}\t{root_bounds.right:.6f}\t"
-            f"{root_bounds.bottom:.6f}\t{root_bounds.width:.6f}\t{root_bounds.height:.6f}\n",
+            "%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n" % (
+                root_bounds.left, root_bounds.top, root_bounds.right,
+                root_bounds.bottom, root_bounds.width, root_bounds.height),
             encoding="utf-8",
         )
 
-    visual_rows: list[dict[str, str]] = []
-    text_rows: list[dict[str, str]] = []
+    visual_rows = []  # type: List[Dict[str, str]]
+    text_rows = []  # type: List[Dict[str, str]]
 
     for child in swf.first_frame(sprite_id):
         character_id = child.get("characterId")
@@ -302,11 +301,11 @@ def main() -> int:
                 "depth": str(depth),
                 "name": name,
                 "characterId": str(character_id),
-                "x": f"{x:.6f}",
-                "y": f"{y:.6f}",
-                "width": f"{width:.6f}",
-                "height": f"{height:.6f}",
-                "fontSize": f"{float(info['fontHeight']):.6f}",
+                "x": "%.6f" % x,
+                "y": "%.6f" % y,
+                "width": "%.6f" % width,
+                "height": "%.6f" % height,
+                "fontSize": "%.6f" % float(info["fontHeight"]),
                 "red": str(info["red"]),
                 "green": str(info["green"]),
                 "blue": str(info["blue"]),
@@ -330,7 +329,7 @@ def main() -> int:
         if rect is None:
             continue
         draw_x, draw_y, draw_width, draw_height = rect
-        asset_name = f"d{depth}_c{character_id}.png"
+        asset_name = "d%d_c%d.png" % (depth, character_id)
         source_frame = "up" if character_type in {"button", "button2"} else ("100" if character_id == 361 else "1")
 
         visual_rows.append({
@@ -338,19 +337,21 @@ def main() -> int:
             "name": name,
             "characterId": str(character_id),
             "characterType": character_type,
-            "drawX": f"{draw_x:.6f}",
-            "drawY": f"{draw_y:.6f}",
-            "drawWidth": f"{draw_width:.6f}",
-            "drawHeight": f"{draw_height:.6f}",
+            "drawX": "%.6f" % draw_x,
+            "drawY": "%.6f" % draw_y,
+            "drawWidth": "%.6f" % draw_width,
+            "drawHeight": "%.6f" % draw_height,
             "asset": asset_name,
             "sourceFrame": source_frame,
         })
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    visual_fields = [
+        "depth", "name", "characterId", "characterType", "drawX", "drawY",
+        "drawWidth", "drawHeight", "asset", "sourceFrame"
+    ]
     with args.output.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(visual_rows[0].keys()) if visual_rows else [
-            "depth", "name", "characterId", "characterType", "drawX", "drawY", "drawWidth", "drawHeight", "asset", "sourceFrame"
-        ], delimiter="\t")
+        writer = csv.DictWriter(handle, fieldnames=visual_fields, delimiter="\t")
         writer.writeheader()
         writer.writerows(visual_rows)
 
@@ -362,11 +363,11 @@ def main() -> int:
             writer.writeheader()
             writer.writerows(text_rows)
 
-    print(f"Wrote {args.output} ({len(visual_rows)} exact visuals)")
+    print("Wrote %s (%d exact visuals)" % (args.output, len(visual_rows)))
     if args.text_output:
-        print(f"Wrote {args.text_output} ({len(text_rows)} exact text fields)")
+        print("Wrote %s (%d exact text fields)" % (args.text_output, len(text_rows)))
     if args.root_bounds_output and root_bounds is not None:
-        print(f"Wrote {args.root_bounds_output} (symbol1998 root bounds)")
+        print("Wrote %s (symbol1998 root bounds)" % args.root_bounds_output)
     return 0
 
 
