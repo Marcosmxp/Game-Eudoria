@@ -190,6 +190,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate exact static visual manifest for PlayerFullInfoUIMC symbol1998")
     parser.add_argument("swf", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--root-bounds-output", type=Path)
     parser.add_argument(
         "--exclude-ids",
         nargs="*",
@@ -205,6 +206,16 @@ def main() -> int:
     excluded = set(args.exclude_ids)
     resolver = BoundsResolver(swf)
     rows: list[dict[str, str]] = []
+
+    root_bounds = resolver.resolve(sprite_id)
+    if args.root_bounds_output and root_bounds is not None:
+        args.root_bounds_output.parent.mkdir(parents=True, exist_ok=True)
+        args.root_bounds_output.write_text(
+            "left\ttop\tright\tbottom\twidth\theight\n"
+            f"{root_bounds.left:.6f}\t{root_bounds.top:.6f}\t{root_bounds.right:.6f}\t"
+            f"{root_bounds.bottom:.6f}\t{root_bounds.width:.6f}\t{root_bounds.height:.6f}\n",
+            encoding="utf-8",
+        )
 
     for child in swf.first_frame(sprite_id):
         character_id = child.get("characterId")
@@ -273,6 +284,8 @@ def main() -> int:
         writer.writerows(rows)
 
     print(f"Wrote {args.output} ({len(rows)} static visuals)")
+    if args.root_bounds_output and root_bounds is not None:
+        print(f"Wrote {args.root_bounds_output} (symbol1998 root bounds)")
     return 0
 
 
