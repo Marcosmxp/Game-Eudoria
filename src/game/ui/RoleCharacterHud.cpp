@@ -1,6 +1,10 @@
 #include "game/ui/RoleCharacterHud.h"
 
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <utility>
 
 namespace eudoria::game::ui {
 namespace {
@@ -38,6 +42,21 @@ constexpr std::array<MainButtonPlacement, 8> kMainButtons{{
     {-130.65F, -4.65F, 0.800018310546875F, 1.0000152587890625F, L"Gear Evolve"},
 }};
 
+std::vector<std::string> splitTsvLine(const std::string& line) {
+    std::vector<std::string> fields;
+    std::size_t begin = 0;
+    while (true) {
+        const std::size_t end = line.find('\t', begin);
+        if (end == std::string::npos) {
+            fields.emplace_back(line.substr(begin));
+            break;
+        }
+        fields.emplace_back(line.substr(begin, end - begin));
+        begin = end + 1;
+    }
+    return fields;
+}
+
 } // namespace
 
 bool RoleCharacterHud::initialize(
@@ -53,6 +72,10 @@ bool RoleCharacterHud::initialize(
     loaded = renderer.loadTexture((runtimeRoot / L"attr_remove" / L"up.png").wstring(), attrRemove_) && loaded;
     loaded = renderer.loadTexture((runtimeRoot / L"attr_add_all" / L"up.png").wstring(), attrAddAll_) && loaded;
     loaded = renderer.loadTexture((runtimeRoot / L"main_button.png").wstring(), mainButton_) && loaded;
+
+    // Optional exact static extras recovered from symbol1998. The stable core
+    // above remains authoritative, so a missing manifest never blocks startup.
+    loadAutoVisuals(renderer, runtimeRoot);
 
     texts_.clear();
 
@@ -262,6 +285,22 @@ void RoleCharacterHud::render(
             progressHeight);
     }
 
+    // Static extras discovered from the actual symbol1998 display list. Their
+    // geometry comes from assets.swf and the extracted PNG is the corresponding
+    // FFDec character asset. This intentionally does not fabricate the central
+    // player model or equipped item contents: those are dynamic runtime objects.
+    for (const auto& visual : autoVisuals_) {
+        if (!visual.texture.valid()) {
+            continue;
+        }
+        renderer.draw(
+            visual.texture,
+            rootX + visual.x,
+            rootY + visual.y,
+            visual.width,
+            visual.height);
+    }
+
     // Attribute allocation controls. Gameplay point mutation is deliberately
     // deferred; these are the real payload visuals in their original positions.
     for (const auto& placement : kAttrAddAll) {
@@ -319,6 +358,65 @@ void RoleCharacterHud::addText(
         roleTextStyle(fontSize, align),
         visual.texture);
     texts_.push_back(std::move(visual));
+}
+
+void RoleCharacterHud::loadAutoVisuals(
+    SpriteRenderer& renderer,
+    const std::filesystem::path& runtimeRoot) {
+    autoVisuals_.clear();
+
+    const auto manifestPath = runtimeRoot / L"auto_manifest.tsv";
+    std::ifstream stream(manifestPath, std::ios::binary);
+    if (!stream) {
+        return;
+    }
+
+    std::string line;
+    if (!std::getline(stream, line)) {
+        return;
+    }
+
+    while (std::getline(stream, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        const auto fields = splitTsvLine(line);
+        if (fields.size() < 10 || fields[8].empty()) {
+            continue;
+        }
+
+        try {
+            AutoVisual visual;
+            visual.depth = std::stoi(fields[0]);
+            visual.x = std::stof(fields[4]);
+            visual.y = std::stof(fields[5]);
+            visual.width = std::stof(fields[6]);
+            visual.height = std::stof(fields[7]);
+
+            if (visual.width == 0.0F || visual.height == 0.0F) {
+                continue;
+            }
+
+            if (!renderer.loadTexture(
+                    (runtimeRoot / L"auto" / std::filesystem::path(fields[8])).wstring(),
+                    visual.texture)) {
+                continue;
+            }
+
+            autoVisuals_.push_back(std::move(visual));
+        }
+        catch (...) {
+            // Malformed optional auto entry must never prevent the stable Role
+            // window from loading.
+        }
+    }
+
+    std::sort(
+        autoVisuals_.begin(),
+        autoVisuals_.end(),
+        [](const AutoVisual& left, const AutoVisual& right) {
+            return left.depth < right.depth;
+        });
 }
 
 void RoleCharacterHud::drawSpriteAtBounds(
