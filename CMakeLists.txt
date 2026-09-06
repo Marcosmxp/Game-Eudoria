@@ -12,6 +12,7 @@ add_executable(Eudoria WIN32
     src/engine/render/D3D11Renderer.cpp
     src/engine/render/SpriteRenderer.cpp
     src/engine/render/TextRasterizer.cpp
+    src/game/data/LegacyTaskCatalog.cpp
     src/game/ui/ControlBar.cpp
     src/game/ui/GameInfoHud.cpp
     src/game/ui/LegacyHudReference.cpp
