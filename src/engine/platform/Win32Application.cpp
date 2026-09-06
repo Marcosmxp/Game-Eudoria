@@ -4,6 +4,9 @@
 
 #include <windowsx.h>
 
+#include <utility>
+#include <vector>
+
 namespace eudoria {
 namespace {
 constexpr wchar_t kWindowClassName[] = L"EudoriaWindowClass";
@@ -30,8 +33,24 @@ int Win32Application::run(const HINSTANCE instance, const int showCommand) {
     smallMap_.initialize(renderer_.sprites());
     taskTracer_.initialize(renderer_.sprites());
 
-    // TaskTracer intentionally starts without invented quest data. The next
-    // gameplay milestone binds this UI to the offline TaskManager / txt payload.
+    // txt/itl.json is the exact task payload passed to TaskManager.init() by the
+    // legacy ResLoadModule. During the UI-only phase there is no offline player
+    // save/progression state yet, so Current remains empty. Available is fed with
+    // a small, deterministic preview selected from the real Tyria Village main
+    // quest definitions. The quest names/NPC/map labels themselves are never
+    // invented. This bridge is replaced by TaskManager condition evaluation when
+    // gameplay systems are implemented.
+    if (taskCatalog_.load()) {
+        std::vector<game::ui::AvailableTask> availableTasks;
+        for (const auto* task : taskCatalog_.starterUiPreview(8)) {
+            if (!task) {
+                continue;
+            }
+            availableTasks.push_back({task->id, task->name, task->receiveAt});
+        }
+        taskTracer_.setAvailableTasks(std::move(availableTasks));
+    }
+
     legacyHudReference_.initialize(renderer_.sprites());
 
     MSG message{};
